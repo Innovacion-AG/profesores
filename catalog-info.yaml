@@ -1,0 +1,46 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: profesores
+  title: Profesores
+  description: Profesores virtuales con los que el alumno conversa por voz o texto dentro de los cursos de Rise.
+  annotations:
+    github.com/project-slug: Innovacion-AG/profesores
+    academiaglobal.mx/canal-slack: proj-profesores
+    academiaglobal.mx/suplente: rodrig317-cpu
+    academiaglobal.mx/verificado-el: "2026-11-18"
+    academiaglobal.mx/credenciales: "KeePassXC › innovacion.kdbx › profesores"
+    # Accesos a los tableros de D-ID (cuenta Proyectos Innovación) y ElevenLabs (cuenta del área)
+    academiaglobal.mx/credenciales-tableros: "KeePassXC › innovacion.kdbx › Cuentas del área"
+    # Las URL anteriores (erikv-ag.github.io/profesores) las sostiene este repositorio puente
+    academiaglobal.mx/repositorio-puente: ErikV-AG/profesores
+    academiaglobal.mx/area-usuaria: DEA
+  tags:
+    - agente
+    - d-id
+    - elevenlabs
+    - github-pages
+  links:
+    - url: https://innovacion-ag.github.io/profesores/lista.html
+      title: Producción (lista de agentes)
+      type: entorno
+    - url: https://innovacion-ag.github.io/profesores/tablero.html
+      title: Tablero de agentes
+      type: entorno
+    - url: https://erikv-ag.github.io/profesores/
+      title: Puente desde la dirección anterior
+      type: entorno
+    - url: https://drive.google.com/drive/folders/1HXtWZWCgBk6wj0-Q4GHy_we8GcY26FaU
+      title: Carpeta de Drive
+      type: ejecutivo
+spec:
+  type: agente
+  # estado=operacion (equivale a production); criticidad=media; cliente=interno
+  lifecycle: production
+  owner: user:CoriaAlx
+  dependsOn:
+    - resource:d-id
+    - resource:elevenlabs
+    - resource:heygen
+    - resource:github-pages
+    - resource:articulate-rise-360

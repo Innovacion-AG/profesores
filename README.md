@@ -1,5 +1,7 @@
 # Profesores — agentes conversacionales
 
+## Qué es
+
 Cada agente (Alan Turing, Marie Curie, Adam Smith…) es una página que se
 inserta por iframe en las materias de Rise:
 
@@ -16,6 +18,67 @@ Todas las páginas salen de **una sola lista**, [`agentes.json`](agentes.json),
 y comparten la misma lógica (`src/agente.js`) y el mismo estilo
 (`src/agente.css`). Una mejora en esos archivos llega a todos los agentes a
 la vez. No se edita ninguna página `.html` a mano.
+
+Objetivo: dar a los cursos de Rise profesores virtuales con los que el alumno
+conversa por voz o texto.
+
+## Estado y responsables
+
+| | |
+| --- | --- |
+| Estado | En operación: 53 agentes publicados, con iframes en cursos de Rise |
+| Responsable | @CoriaAlx |
+| Suplente | @rodrig317-cpu |
+| Supervisor y revisor | @ErikV-AG |
+| Área usuaria | DEA (asigna los personajes, monta los agentes en Rise y da seguimiento en la cédula) |
+| Patrocinadora | Leticia Beltrán (DEA) |
+| Credenciales | KeePassXC › innovacion.kdbx › profesores (client keys) y › Cuentas del área (tableros de D-ID y ElevenLabs) |
+| Carpeta de Drive | https://drive.google.com/drive/folders/1HXtWZWCgBk6wj0-Q4GHy_we8GcY26FaU |
+
+## Arranque
+
+Requisitos: git, Python 3 (biblioteca estándar) y Node.js para
+`node --check`. No se instala nada más. En local D-ID no conecta, porque sus
+client keys solo aceptan `innovacion-ag.github.io` y `erikv-ag.github.io`;
+se ven el cargador, la compuerta y el aviso.
+
+1. Clonar el repositorio:
+   `git clone https://github.com/Innovacion-AG/profesores.git && cd profesores`
+2. Validar la lista y generar el sitio: `python3 scripts/construir.py`.
+   Debe terminar con «✓ Sitio generado en _site/ … y verificado». Para
+   solo validar: `python3 scripts/construir.py --validar`.
+3. Revisar la sintaxis de la lógica: `node --check src/agente.js`.
+4. Servir el sitio: `python3 scripts/servidor.py`.
+5. Abrir http://localhost:8000/lista.html y entrar a un agente.
+6. Para ver un agente conectado a D-ID, abrir su página publicada:
+   https://innovacion-ag.github.io/profesores/<id>.html
+
+Para editar un agente sin clonar nada, seguir «Agregar o cambiar un agente».
+
+## Estructura del repositorio
+
+| Ruta | Contenido |
+| --- | --- |
+| `agentes.json` | Lista de agentes: fuente única de datos (nombre, ids y client key de D-ID, id de ElevenLabs). |
+| `src/` | `plantilla.html`, `agente.js` y `agente.css` compartidos por todos los agentes; `tablero.html`. |
+| `scripts/construir.py` | Valida `agentes.json` y genera `_site/`. |
+| `scripts/servidor.py` | Sirve `_site/` en local como GitHub Pages. |
+| `scripts/urls_publicadas.txt` | Las 42 páginas que existían al migrar; no pueden desaparecer. |
+| `.github/workflows/publicar.yml` | Valida, construye y publica en GitHub Pages. |
+| `benito.html`, `content/` | Se publican tal cual. `benito.html` ya no sigue en uso. |
+| `_referencia/` | Código de referencia y páginas anteriores; no se publica. |
+| `docs/` | Blueprint, operación y decisiones. |
+| `catalog-info.yaml` | Ficha del proyecto para el catálogo. |
+
+## Documentación
+
+- [Blueprint: arquitectura, dependencias, datos y riesgos](docs/blueprint.md)
+- [Operación: despliegue, reversión, monitoreo y tareas periódicas](docs/operacion.md)
+- [Decisiones](docs/decisiones/)
+
+## Dónde pedir ayuda
+
+Canal `#proj-profesores` en Slack.
 
 ## Agregar o cambiar un agente
 
@@ -42,9 +105,14 @@ la vez. No se edita ninguna página `.html` a mano.
      (empieza con `agent_`). Déjalo en `""` si no hay.
    - Cada bloque va separado del siguiente por una coma; el último no lleva
      coma.
-3. Pulsa **Commit changes…** Puedes hacer el commit directo en `main` o elegir
-   **Create a new branch… and start a pull request** (recomendado: así la
-   revisión corre antes de publicar y puedes revertir con un botón).
+3. Pulsa **Commit changes…** y deja **Commit directly to the `main` branch**.
+   Las altas y los cambios de agentes en `agentes.json` se hacen directo en
+   `main`, sin pull request: la validación de **Actions** impide publicar un
+   error.
+
+Los cambios a `src/`, a `scripts/` o a la publicación (`.github/`) van en
+una rama nueva con pull request (**Create a new branch… and start a pull
+request**), para que la revisión corra antes de publicar.
 
 ## Para colaboradores: no subas páginas `.html` a la raíz
 
@@ -148,18 +216,7 @@ quitar su línea de ese archivo.
 
 ## Para quien tenga el repositorio clonado
 
-    python3 scripts/construir.py            # valida y genera _site/
-    python3 scripts/construir.py --validar  # solo valida
-    python3 scripts/servidor.py             # http://localhost:8000/lista.html
-    node --check src/agente.js
-
-Solo Python 3 (biblioteca estándar) y Node para `node --check`. En local
-D-ID no conecta (solo acepta las keys desde `innovacion-ag.github.io`), pero se
-ven el cargador, la compuerta y el aviso.
-
-`benito.html` y la carpeta `content/` se publican tal cual. Las páginas
-anteriores a la migración quedan para consulta en
-`_referencia/paginas_anteriores/` y no se publican.
+Ver [Arranque](#arranque).
 
 ### Nota: si algún día se sirve desde Railway con Caddy
 
@@ -170,17 +227,12 @@ audio.
 
 ## Migración
 
-Pasos manuales, en este orden:
+**Completada.** El 2026-11-18 el repositorio se transfirió de la cuenta
+personal `ErikV-AG` a la organización `Innovacion-AG`, y el sitio pasó de
+`erikv-ag.github.io/profesores` a `innovacion-ag.github.io/profesores`. Las
+direcciones anteriores siguen funcionando por el puente `ErikV-AG/profesores`
+(ver [docs/decisiones/0005](docs/decisiones/0005-se-transfiere-a-innovacion-ag-y-se-conserva-la-direccion-anterior-con-un-puente.md)).
 
-1. Fusionar el PR de `prueba-plantilla` y probar las URLs de
-   `…/profesores/prueba/`.
-2. **Settings → Pages → Build and deployment → Source: GitHub Actions.** El
-   sitio actual sigue publicado hasta el siguiente despliegue; comprueba que
-   una URL siga abriendo.
-3. Fusionar el PR de `refactor-plantilla` a `main`. La Action construye y
-   publica (se ve en la pestaña **Actions**).
-4. Abrir **…/profesores/lista.html** publicada y probar tres o cuatro
-   agentes.
-5. Si algo falla: botón **Revert** en el PR fusionado y fusionar ese revert
-   (regresan las páginas viejas a la raíz); luego **Settings → Pages →
-   Source: Deploy from a branch** (`main`, carpeta `/ (root)`).
+La migración anterior, de páginas copiadas a mano a una lista y una plantilla
+publicadas con GitHub Actions, se completó el 2026-10-08 (ver
+[docs/decisiones/0003](docs/decisiones/0003-se-generan-todas-las-paginas-desde-una-lista-y-una-plantilla-compartida.md)).
