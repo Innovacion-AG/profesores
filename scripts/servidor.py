@@ -11,9 +11,9 @@ Como GitHub Pages:
   - /profesores/<algo> sirve lo mismo que /<algo>.
 Sin caché, para ver cada cambio al recargar.
 
-Ojo: D-ID solo acepta las client keys desde erikv-ag.github.io, así que en
-local el agente no conecta (sirve para revisar el cargador, la compuerta y
-el aviso).
+Ojo: D-ID solo acepta las client keys desde innovacion-ag.github.io (y
+erikv-ag.github.io, la dirección anterior), así que en local el agente
+no conecta (sirve para revisar el cargador, la compuerta y el aviso).
 
 Solo usa la biblioteca estándar de Python 3.
 """

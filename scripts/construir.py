@@ -42,7 +42,7 @@ SALIDA = RAIZ / '_site'
 CARPETA_PRUEBA = RAIZ / 'prueba'
 URLS_PUBLICADAS = RAIZ / 'scripts' / 'urls_publicadas.txt'
 
-URL_BASE = 'https://erikv-ag.github.io/profesores/'
+URL_BASE = 'https://innovacion-ag.github.io/profesores/'
 URL_IDS_PUBLICADOS = URL_BASE + 'ids-publicados.json'
 
 # Se copian tal cual al sitio, sin modificarlos.

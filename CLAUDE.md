@@ -3,15 +3,21 @@
 ## Qué es
 Agentes conversacionales de D-ID que representan a profesores (Alan Turing,
 Marie Curie, Adam Smith, etc.). Cada agente es una página publicada en
-GitHub Pages (`https://erikv-ag.github.io/profesores/<id>.html`) que se
-inserta por iframe en materias desarrolladas en Rise:
+GitHub Pages (`https://innovacion-ag.github.io/profesores/<id>.html`) que
+se inserta por iframe en materias desarrolladas en Rise:
 
-    <iframe src="https://erikv-ag.github.io/profesores/<id>.html"
+    <iframe src="https://innovacion-ag.github.io/profesores/<id>.html"
       width="100%" height="350" frameborder="0"
       allow="microphone; camera; autoplay" allowfullscreen></iframe>
 
 Si D-ID no opera (sin créditos, sin sesiones libres, no carga), la página
 cambia a un agente de voz de ElevenLabs.
+
+El repositorio es `Innovacion-AG/profesores`. Los cursos anteriores apuntan a
+`erikv-ag.github.io/profesores/<id>.html`; el repositorio `ErikV-AG/profesores`
+es un puente (`index.html` y `404.html`) que incrusta la página nueva en un
+iframe con `allow="microphone; camera; autoplay"`. Una redirección simple
+haría perder el permiso de micrófono, que solo vale para el origen del `src`.
 
 ## Reglas que no se rompen
 1. **Ninguna URL publicada cambia.** Cada `<id>.html` que existe hoy en la
