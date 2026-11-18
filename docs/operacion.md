@@ -66,7 +66,7 @@ PENDIENTE: ¿quién recibe los reportes de falla de DEA y por qué canal, ademá
 | --- | --- | --- |
 | Revisar créditos de D-ID | Antes del día 18 de cada mes | Los créditos de la cuenta «Proyectos Innovación» se renuevan el día 18. |
 | Revisar plan y saldo de ElevenLabs | PENDIENTE: ¿fecha de renovación? | Cuenta del área. |
-| Migrar HeyGen a una cuenta del área | Una vez | Hoy los videos de presentación se hacen con la cuenta personal erik.velasco. |
+| Confirmar la cuenta de HeyGen | Una vez | Los videos de presentación deben producirse con una cuenta del área. |
 | Confirmar dominios permitidos | Al crear o rotar una client key de D-ID y al crear un agente de ElevenLabs | Deben incluir `innovacion-ag.github.io` y `erikv-ag.github.io`. |
 | Actualizar acciones de GitHub | Antes del retiro de Node.js 20 | Incidencia #6. |
 | Revisar la documentación | Trimestral | Actualizar `academiaglobal.mx/verificado-el` en `catalog-info.yaml`. |
@@ -80,7 +80,7 @@ No hay respaldos que programar: todo el contenido está en git.
 | Responsable | @CoriaAlx |
 | Suplente | @rodrig317-cpu |
 | Supervisor y revisor | @ErikV-AG |
-| Patrocinadora | Leticia Beltrán (DEA) |
+| Patrocinio | DEA |
 | Área usuaria | DEA: asigna los personajes, monta los agentes en Rise y da seguimiento en la cédula |
 | Proveedor de video | D-ID. PENDIENTE: ¿canal de soporte y titular de la cuenta? |
 | Proveedor de voz | ElevenLabs. PENDIENTE: ¿canal de soporte y titular de la cuenta? |

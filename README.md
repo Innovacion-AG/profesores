@@ -31,8 +31,8 @@ conversa por voz o texto.
 | Suplente | @rodrig317-cpu |
 | Supervisor y revisor | @ErikV-AG |
 | Área usuaria | DEA (asigna los personajes, monta los agentes en Rise y da seguimiento en la cédula) |
-| Patrocinadora | Leticia Beltrán (DEA) |
-| Credenciales | KeePassXC › innovacion.kdbx › profesores (client keys) y › Cuentas del área (tableros de D-ID y ElevenLabs) |
+| Patrocinio | DEA |
+| Credenciales | Gestor de contraseñas del área, grupo profesores |
 | Carpeta de Drive | https://drive.google.com/drive/folders/1HXtWZWCgBk6wj0-Q4GHy_we8GcY26FaU |
 
 ## Arranque
@@ -228,7 +228,7 @@ audio.
 ## Migración
 
 **Completada.** El 2026-11-18 el repositorio se transfirió de la cuenta
-personal `ErikV-AG` a la organización `Innovacion-AG`, y el sitio pasó de
+`ErikV-AG` a la organización `Innovacion-AG`, y el sitio pasó de
 `erikv-ag.github.io/profesores` a `innovacion-ag.github.io/profesores`. Las
 direcciones anteriores siguen funcionando por el puente `ErikV-AG/profesores`
 (ver [docs/decisiones/0005](docs/decisiones/0005-se-transfiere-a-innovacion-ag-y-se-conserva-la-direccion-anterior-con-un-puente.md)).
