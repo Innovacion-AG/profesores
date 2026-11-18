@@ -10,7 +10,7 @@ la página cambia sola a un agente de voz de ElevenLabs.
 - Patrocinadora: Leticia Beltrán (DEA).
 - Cliente: interno. UCC y GRG son clientes de algunos diplomados (ids
   `diplomadoIA-*-UCC_*` y `diplomadoIA-*-GRG_*`).
-- Responsable: @CoriaAlx. Suplente: @rodrig317-cpu. Revisor: @Uxbyemiliano.
+- Responsable: @CoriaAlx. Suplente: @rodrig317-cpu. Supervisor y revisor: @ErikV-AG.
 - Usuarios: PENDIENTE: ¿cuántos cursos y alumnos usan hoy los agentes?
 - Criterio de éxito: PENDIENTE: ¿cómo se mide que el proyecto cumple su objetivo?
 
@@ -137,5 +137,5 @@ momento».
 | 2026-11-18 | Los créditos de D-ID se renuevan el día 18; al agotarse, los agentes pasan al respaldo de ElevenLabs y 13 agentes sin respaldo muestran el aviso o el chat de texto. | Medio: se degrada la experiencia, ninguna actividad evaluada depende de los agentes. |
 | 2026-11-18 | El widget de ElevenLabs se carga desde unpkg.com sin versión fija. | Medio: una versión nueva puede cambiar el comportamiento sin aviso. |
 | 2026-11-18 | `actions/deploy-pages@v4` y `actions/upload-artifact@v4` usan Node.js 20, que GitHub retira (incidencia #6). | Medio: la publicación puede dejar de funcionar. |
-| 2026-11-18 | La rama `main` no tiene protección y se aceptan commits directos desde el navegador. | Bajo: la validación de Actions evita publicar algo roto, pero un cambio sin revisión llega al sitio. |
+| 2026-11-18 | Las altas en `agentes.json` se hacen directo en `main` por diseño, y `main` no tiene protección: nada impide un commit directo en `src/` o `scripts/`, que deben ir por PR. | Bajo: la validación de Actions evita publicar algo roto, pero un cambio sin revisión llega a las 53 páginas. |
 | 2026-11-18 | `benito.html` ya no sigue en uso y `content/` (export de Rise «Prueba») no tiene uso identificado; ambos se publican tal cual. PENDIENTE: ¿qué es `content/` y quién decide si `benito.html` y `content/` se retiran? | Bajo: contenido sin dueño en producción. |

@@ -17,13 +17,15 @@ Consultar con el responsable antes de cambiar:
 
 ## Despliegue
 
-1. Cambiar `agentes.json` o `src/` en una rama y abrir un pull request (PR)
-   contra `main`. También se acepta el commit directo en `main` desde
-   github.com, pero sin revisión previa.
-2. En el PR, el check «Validar y construir» corre `node --check src/agente.js`
-   y `python3 scripts/construir.py`. Si falla, el resumen de la ejecución
-   indica el error y la línea de `agentes.json`.
-3. Al integrar el PR, `publicar.yml` valida otra vez, construye `_site/` y lo
+1. Según el tipo de cambio:
+   - Altas y cambios de agentes en `agentes.json`: commit directo en `main`
+     desde github.com, sin pull request (PR).
+   - Cambios a `src/`, a `scripts/` o a la publicación (`.github/`): rama
+     nueva y PR contra `main`. En el PR, el check «Validar y construir» corre
+     `node --check src/agente.js` y `python3 scripts/construir.py`.
+2. Si la validación falla, el resumen de la ejecución indica el error y la
+   línea de `agentes.json`. No se publica nada.
+3. Con el push a `main` (commit directo o PR integrado), `publicar.yml` valida otra vez, construye `_site/` y lo
    publica con `actions/deploy-pages`. La validación compara contra
    `HEAD~1` y contra `ids-publicados.json` del sitio en línea: un agente
    borrado detiene la publicación.
@@ -77,7 +79,7 @@ No hay respaldos que programar: todo el contenido está en git.
 | --- | --- |
 | Responsable | @CoriaAlx |
 | Suplente | @rodrig317-cpu |
-| Revisor | @Uxbyemiliano |
+| Supervisor y revisor | @ErikV-AG |
 | Patrocinadora | Leticia Beltrán (DEA) |
 | Área usuaria | DEA: asigna los personajes, monta los agentes en Rise y da seguimiento en la cédula |
 | Proveedor de video | D-ID. PENDIENTE: ¿canal de soporte y titular de la cuenta? |

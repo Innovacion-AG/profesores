@@ -31,7 +31,9 @@ haría perder el permiso de micrófono, que solo vale para el origen del `src`.
 2. **No se publica nada roto.** El sitio solo se despliega si la
    construcción y la validación pasan.
 3. **No fusionar PRs ni cambiar la configuración de GitHub sin
-   confirmación explícita.** Todo cambio entra por PR.
+   confirmación explícita.** Las altas y cambios de agentes en
+   `agentes.json` se hacen directo en `main`, sin PR. Los cambios a
+   `src/`, a `scripts/` o a la publicación (`.github/`) van por rama y PR.
    El dueño del repo no lo tiene clonado: edita en github.com. Las
    instrucciones para él deben poder seguirse desde el navegador.
 4. `benito.html` y la carpeta `content/` (export de Rise) se publican tal
@@ -74,7 +76,8 @@ haría perder el permiso de micrófono, que solo vale para el origen del `src`.
 - Operación y despliegue: docs/operacion.md
 - Decisiones: docs/decisiones/
 - Conversación del proyecto: #proj-profesores en Slack
-- Responsable @CoriaAlx, suplente @rodrig317-cpu, revisor @Uxbyemiliano
+- Responsable @CoriaAlx, suplente @rodrig317-cpu, supervisor y revisor
+  @ErikV-AG
   (.github/CODEOWNERS)
 
 ## No tocar sin consultar
