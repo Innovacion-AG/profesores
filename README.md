@@ -3,7 +3,14 @@
 Cada agente (Alan Turing, Marie Curie, Adam Smith…) es una página que se
 inserta por iframe en las materias de Rise:
 
-    https://erikv-ag.github.io/profesores/<id>.html
+    https://innovacion-ag.github.io/profesores/<id>.html
+
+Hasta noviembre de 2026 el sitio estuvo en `erikv-ag.github.io/profesores`.
+Esas direcciones siguen funcionando: el repositorio `ErikV-AG/profesores`
+es un puente que incrusta la página nueva cuando se abre en un iframe (así
+conserva el permiso de micrófono de los cursos de Rise) y redirige cuando
+se abre directamente. No lo borres mientras haya cursos con la dirección
+anterior.
 
 Todas las páginas salen de **una sola lista**, [`agentes.json`](agentes.json),
 y comparten la misma lógica (`src/agente.js`) y el mismo estilo
@@ -29,8 +36,8 @@ la vez. No se edita ninguna página `.html` a mano.
      `_` y `-`. **No cambies la llave de un agente que ya está en un curso**:
      su iframe dejaría de funcionar.
    - `did_agent_id` y `did_client_key`: en D-ID Studio → Agents → Embed
-     (`data-agent-id` y `data-client-key`). La key debe permitir el dominio
-     `erikv-ag.github.io`.
+     (`data-agent-id` y `data-client-key`). La key debe permitir los dominios
+     `innovacion-ag.github.io` y `erikv-ag.github.io`.
    - `elevenlabs_agent_id`: el id del agente de voz de respaldo en ElevenLabs
      (empieza con `agent_`). Déjalo en `""` si no hay.
    - Cada bloque va separado del siguiente por una coma; el último no lleva
@@ -78,17 +85,17 @@ En un pull request, la misma revisión aparece abajo del PR, en los checks.
 
 ## Copiar el iframe
 
-Abre **https://erikv-ag.github.io/profesores/lista.html**: tiene todos los
+Abre **https://innovacion-ag.github.io/profesores/lista.html**: tiene todos los
 agentes con botones **Copiar URL** y **Copiar iframe**. El iframe copiado ya
 tiene el formato que va en Rise:
 
 ```html
-<iframe src="https://erikv-ag.github.io/profesores/<id>.html"
+<iframe src="https://innovacion-ag.github.io/profesores/<id>.html"
   width="100%" height="350" frameborder="0"
   allow="microphone; camera; autoplay" allowfullscreen></iframe>
 ```
 
-**https://erikv-ag.github.io/profesores/tablero.html** resume los agentes por
+**https://innovacion-ag.github.io/profesores/tablero.html** resume los agentes por
 personaje y materia, con la fecha de la última publicación. Ninguna de las
 dos páginas lleva las keys de D-ID.
 
@@ -147,7 +154,7 @@ quitar su línea de ese archivo.
     node --check src/agente.js
 
 Solo Python 3 (biblioteca estándar) y Node para `node --check`. En local
-D-ID no conecta (solo acepta las keys desde `erikv-ag.github.io`), pero se
+D-ID no conecta (solo acepta las keys desde `innovacion-ag.github.io`), pero se
 ven el cargador, la compuerta y el aviso.
 
 `benito.html` y la carpeta `content/` se publican tal cual. Las páginas
