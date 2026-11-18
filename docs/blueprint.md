@@ -7,12 +7,15 @@ Rise inserta por iframe. El agente principal es de D-ID; si D-ID no opera,
 la página cambia sola a un agente de voz de ElevenLabs.
 
 - Área usuaria: DEA, que asigna los personajes y da seguimiento en la cédula.
-- Patrocinadora: Leticia Beltrán (DEA).
+- Patrocinio: DEA.
 - Cliente: interno. UCC y GRG son clientes de algunos diplomados (ids
   `diplomadoIA-*-UCC_*` y `diplomadoIA-*-GRG_*`).
 - Responsable: @CoriaAlx. Suplente: @rodrig317-cpu. Supervisor y revisor: @ErikV-AG.
 - Usuarios: PENDIENTE: ¿cuántos cursos y alumnos usan hoy los agentes?
 - Criterio de éxito: PENDIENTE: ¿cómo se mide que el proyecto cumple su objetivo?
+- `benito.html` ya no sigue en uso y `content/` (export de Rise «Prueba») no
+  tiene uso identificado; los dos se publican tal cual. PENDIENTE: ¿qué es
+  `content/` y quién decide si `benito.html` y `content/` se retiran?
 
 ## 1. Contexto (C4, nivel 1)
 
@@ -93,13 +96,13 @@ momento».
 
 | Servicio | Uso | Cuenta titular | Plan | Ubicación de la credencial |
 | --- | --- | --- | --- | --- |
-| D-ID | Agentes de video (embed v2). Las client keys solo funcionan desde los dominios permitidos: `innovacion-ag.github.io` y `erikv-ag.github.io`. | Cuenta «Proyectos Innovación». PENDIENTE: ¿quién es el titular? | PENDIENTE: ¿qué plan? Los créditos se renuevan el día 18 de cada mes. | Client keys: KeePassXC › innovacion.kdbx › profesores. Tablero: KeePassXC › innovacion.kdbx › Cuentas del área › D-ID · cuenta Proyectos Innovación |
-| ElevenLabs | Agente de voz de respaldo (widget `@elevenlabs/convai-widget-embed`). 40 de 53 agentes lo tienen. | Cuenta del área. PENDIENTE: ¿quién es el titular? | PENDIENTE: ¿qué plan y cuándo se renueva? | KeePassXC › innovacion.kdbx › Cuentas del área › ElevenLabs · cuenta del área |
-| HeyGen | Videos de presentación de cada agente. No aparece en el código. | Cuenta personal erik.velasco; debe migrarse a una cuenta del área. | PENDIENTE: ¿qué plan? | PENDIENTE: ¿dónde quedará el acceso tras la migración? |
+| D-ID | Agentes de video (embed v2). Las client keys solo funcionan desde los dominios permitidos: `innovacion-ag.github.io` y `erikv-ag.github.io`. | Cuenta «Proyectos Innovación». PENDIENTE: ¿quién es el titular? | PENDIENTE: ¿qué plan? Los créditos se renuevan el día 18 de cada mes. | Gestor de contraseñas del área, grupo profesores |
+| ElevenLabs | Agente de voz de respaldo (widget `@elevenlabs/convai-widget-embed`). 40 de 53 agentes lo tienen. | Cuenta del área. PENDIENTE: ¿quién es el titular? | PENDIENTE: ¿qué plan y cuándo se renueva? | Gestor de contraseñas del área, grupo profesores |
+| HeyGen | Videos de presentación de cada agente. No aparece en el código. | PENDIENTE: ¿cuenta del área titular? | PENDIENTE: ¿qué plan? | Gestor de contraseñas del área, grupo profesores |
 | GitHub Pages y Actions | Construcción y publicación del sitio. | Organización Innovacion-AG | PENDIENTE: ¿plan de la organización? | Sin credenciales propias; Actions usa el token del flujo. |
 | unpkg.com | Entrega el script del widget de ElevenLabs. | Servicio público | Gratuito | No aplica |
 | Google Fonts | Tipografías de `tablero.html`. | Servicio público | Gratuito | No aplica |
-| Vimeo | Video de introducción de `benito.html`, página que ya no sigue en uso. | PENDIENTE: ¿cuenta titular del video? | PENDIENTE | PENDIENTE |
+| Vimeo | Video de introducción de `benito.html`, página que ya no sigue en uso. | PENDIENTE: ¿cuenta titular del video? | PENDIENTE: ¿qué plan? | Gestor de contraseñas del área, grupo profesores |
 | Articulate Rise 360 | Cursos que insertan los agentes por iframe. El montaje lo hace DEA. | PENDIENTE: ¿cuenta de DEA? | PENDIENTE | Fuera de este repositorio |
 
 ## 5. Entornos
@@ -118,8 +121,8 @@ momento».
 - La voz y el texto del alumno se envían
   directamente desde su navegador a D-ID y, en el respaldo, a ElevenLabs.
   Son datos personales de alumnos procesados por terceros.
-- No hay un aviso de privacidad ni un acuerdo identificado que cubra ese
-  procesamiento. Queda registrado como riesgo.
+- El seguimiento de la cobertura legal de ese procesamiento está en el
+  registro RAID de la bitácora ejecutiva.
 - PENDIENTE: ¿D-ID y ElevenLabs guardan las conversaciones según la
   configuración de cada agente?
 - `agentes.json` contiene client keys de D-ID. Son llaves de navegador
@@ -128,14 +131,8 @@ momento».
 
 ## 7. Riesgos y deuda técnica
 
-| Fecha | Descripción | Impacto |
-| --- | --- | --- |
-| 2026-11-18 | No hay aviso de privacidad ni acuerdo identificado que cubra el procesamiento de voz y texto de alumnos en D-ID y ElevenLabs. | Alto: exposición legal en el tratamiento de datos personales de alumnos, incluidos alumnos de clientes (UCC, GRG). |
-| 2026-11-18 | Los videos de presentación se producen en HeyGen con una cuenta personal (erik.velasco). | Medio: si la cuenta se pierde, no se pueden editar ni producir videos de presentación. |
-| 2026-11-18 | El puente `ErikV-AG/profesores` vive en una cuenta personal y sostiene los iframes de cursos anteriores. | Alto: si se borra, renombra o se desactiva GitHub Pages en él, los agentes de esos cursos dejan de cargar. |
-| 2026-11-18 | Las client keys de D-ID dependen de que la lista de dominios permitidos incluya `innovacion-ag.github.io` y `erikv-ag.github.io`. | Alto: si se quita un dominio, los agentes de D-ID fallan y pasan al respaldo o al aviso. |
-| 2026-11-18 | Los créditos de D-ID se renuevan el día 18; al agotarse, los agentes pasan al respaldo de ElevenLabs y 13 agentes sin respaldo muestran el aviso o el chat de texto. | Medio: se degrada la experiencia, ninguna actividad evaluada depende de los agentes. |
-| 2026-11-18 | El widget de ElevenLabs se carga desde unpkg.com sin versión fija. | Medio: una versión nueva puede cambiar el comportamiento sin aviso. |
-| 2026-11-18 | `actions/deploy-pages@v4` y `actions/upload-artifact@v4` usan Node.js 20, que GitHub retira (incidencia #6). | Medio: la publicación puede dejar de funcionar. |
-| 2026-11-18 | Las altas en `agentes.json` se hacen directo en `main` por diseño, y `main` no tiene protección: nada impide un commit directo en `src/` o `scripts/`, que deben ir por PR. | Bajo: la validación de Actions evita publicar algo roto, pero un cambio sin revisión llega a las 53 páginas. |
-| 2026-11-18 | `benito.html` ya no sigue en uso y `content/` (export de Rise «Prueba») no tiene uso identificado; ambos se publican tal cual. PENDIENTE: ¿qué es `content/` y quién decide si `benito.html` y `content/` se retiran? | Bajo: contenido sin dueño en producción. |
+Los riesgos y la deuda técnica del proyecto se registran en el registro
+RAID de la bitácora ejecutiva (acceso interno). Para consultarlo o
+agregar uno, preguntar en `#proj-profesores`. La deuda técnica que tiene
+trabajo concreto se registra además como incidencia con la etiqueta
+`deuda-tecnica`.

@@ -5,7 +5,7 @@ Fecha: 2026-11-18
 Origen: decidido con el dueño del repositorio durante la migración
 
 ## Contexto
-El repositorio vivía en la cuenta personal `ErikV-AG` y el sitio en
+El repositorio vivía en la cuenta `ErikV-AG` y el sitio en
 `erikv-ag.github.io/profesores`. Los proyectos del área deben vivir en la
 organización Innovacion-AG. Hay iframes en cursos de Rise ya publicados que
 apuntan a la dirección anterior con `allow="microphone; camera; autoplay"`.
@@ -14,7 +14,7 @@ dominio dejaría al agente sin micrófono.
 
 ## Decisión
 Se transfiere el repositorio a `Innovacion-AG/profesores` y se publica en
-`innovacion-ag.github.io/profesores`. En la cuenta personal se crea el
+`innovacion-ag.github.io/profesores`. En la cuenta `ErikV-AG` se crea el
 repositorio `ErikV-AG/profesores` con solo `index.html` y `404.html`: dentro
 de un iframe incrustan la página nueva y le delegan micrófono, cámara y
 autoplay; abiertos directamente, redirigen. Ambos conservan ruta, parámetros
@@ -25,7 +25,7 @@ dominios.
 - Los cursos existentes siguen funcionando sin editar sus iframes, con
   micrófono.
 - Los cursos nuevos usan la dirección nueva (`lista.html` ya la entrega).
-- El puente queda en una cuenta personal y no debe borrarse mientras haya
+- El puente queda fuera de la organización y no debe borrarse mientras haya
   cursos con la dirección anterior.
 - Las URL anteriores responden con estado HTTP 404 y el contenido del
   puente, lo normal para un `404.html` de GitHub Pages.

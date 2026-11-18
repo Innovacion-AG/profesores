@@ -9,9 +9,7 @@ metadata:
     academiaglobal.mx/canal-slack: proj-profesores
     academiaglobal.mx/suplente: rodrig317-cpu
     academiaglobal.mx/verificado-el: "2026-11-18"
-    academiaglobal.mx/credenciales: "KeePassXC › innovacion.kdbx › profesores"
-    # Accesos a los tableros de D-ID (cuenta Proyectos Innovación) y ElevenLabs (cuenta del área)
-    academiaglobal.mx/credenciales-tableros: "KeePassXC › innovacion.kdbx › Cuentas del área"
+    academiaglobal.mx/credenciales: "Gestor de contraseñas del área, grupo profesores"
     # Las URL anteriores (erikv-ag.github.io/profesores) las sostiene este repositorio puente
     academiaglobal.mx/repositorio-puente: ErikV-AG/profesores
     academiaglobal.mx/area-usuaria: DEA
