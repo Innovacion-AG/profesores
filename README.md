@@ -1,5 +1,7 @@
 # Profesores — agentes conversacionales
 
+## Qué es
+
 Cada agente (Alan Turing, Marie Curie, Adam Smith…) es una página que se
 inserta por iframe en las materias de Rise:
 
@@ -16,6 +18,66 @@ Todas las páginas salen de **una sola lista**, [`agentes.json`](agentes.json),
 y comparten la misma lógica (`src/agente.js`) y el mismo estilo
 (`src/agente.css`). Una mejora en esos archivos llega a todos los agentes a
 la vez. No se edita ninguna página `.html` a mano.
+
+Objetivo: dar a los cursos de Rise profesores virtuales con los que el alumno
+conversa por voz o texto.
+
+## Estado y responsables
+
+| | |
+| --- | --- |
+| Estado | En operación: 53 agentes publicados, con iframes en cursos de Rise |
+| Responsable | @CoriaAlx |
+| Suplente | @rodrig317-cpu |
+| Revisor | @Uxbyemiliano |
+| Área usuaria | DEA (asigna los personajes, monta los agentes en Rise y da seguimiento en la cédula) |
+| Patrocinadora | Leticia Beltrán (DEA) |
+| Credenciales | KeePassXC › innovacion.kdbx › profesores (client keys) y › Cuentas del área (tableros de D-ID y ElevenLabs) |
+| Carpeta de Drive | https://drive.google.com/drive/folders/1HXtWZWCgBk6wj0-Q4GHy_we8GcY26FaU |
+
+## Arranque
+
+Requisitos: git, Python 3 (biblioteca estándar) y Node.js para
+`node --check`. No se instala nada más. En local D-ID no conecta, porque sus
+client keys solo aceptan `innovacion-ag.github.io` y `erikv-ag.github.io`;
+se ven el cargador, la compuerta y el aviso.
+
+1. Clonar el repositorio:
+   `git clone https://github.com/Innovacion-AG/profesores.git && cd profesores`
+2. Validar la lista y generar el sitio: `python3 scripts/construir.py`.
+   Debe terminar con «✓ Sitio generado en _site/ … y verificado».
+3. Revisar la sintaxis de la lógica: `node --check src/agente.js`.
+4. Servir el sitio: `python3 scripts/servidor.py`.
+5. Abrir http://localhost:8000/lista.html y entrar a un agente.
+6. Para ver un agente conectado a D-ID, abrir su página publicada:
+   https://innovacion-ag.github.io/profesores/<id>.html
+
+Para editar un agente sin clonar nada, seguir «Agregar o cambiar un agente».
+
+## Estructura del repositorio
+
+| Ruta | Contenido |
+| --- | --- |
+| `agentes.json` | Lista de agentes: fuente única de datos (nombre, ids y client key de D-ID, id de ElevenLabs). |
+| `src/` | `plantilla.html`, `agente.js` y `agente.css` compartidos por todos los agentes; `tablero.html`. |
+| `scripts/construir.py` | Valida `agentes.json` y genera `_site/`. |
+| `scripts/servidor.py` | Sirve `_site/` en local como GitHub Pages. |
+| `scripts/urls_publicadas.txt` | Las 42 páginas que existían al migrar; no pueden desaparecer. |
+| `.github/workflows/publicar.yml` | Valida, construye y publica en GitHub Pages. |
+| `benito.html`, `content/` | Se publican tal cual. `benito.html` ya no sigue en uso. |
+| `_referencia/` | Código de referencia y páginas anteriores; no se publica. |
+| `docs/` | Blueprint, operación y decisiones. |
+| `catalog-info.yaml` | Ficha del proyecto para el catálogo. |
+
+## Documentación
+
+- [Blueprint: arquitectura, dependencias, datos y riesgos](docs/blueprint.md)
+- [Operación: despliegue, reversión, monitoreo y tareas periódicas](docs/operacion.md)
+- [Decisiones](docs/decisiones/)
+
+## Dónde pedir ayuda
+
+Canal `#proj-profesores` en Slack.
 
 ## Agregar o cambiar un agente
 

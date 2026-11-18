@@ -1,4 +1,7 @@
-# Repo profesores — contexto para Claude Code
+# Profesores (profesores) — contexto para Claude Code
+
+Profesores virtuales con los que el alumno conversa por voz o texto
+dentro de los cursos de Rise.
 
 ## Qué es
 Agentes conversacionales de D-ID que representan a profesores (Alan Turing,
@@ -64,3 +67,23 @@ haría perder el permiso de micrófono, que solo vale para el origen del `src`.
     python3 scripts/construir.py --prueba   # genera prueba/ (3 agentes)
     python3 scripts/servidor.py             # http://localhost:8000/lista.html (pruebas en la sesión)
     node --check src/agente.js
+
+## Dónde está todo
+- Metadatos del catálogo: catalog-info.yaml
+- Arquitectura y dependencias: docs/blueprint.md
+- Operación y despliegue: docs/operacion.md
+- Decisiones: docs/decisiones/
+- Conversación del proyecto: #proj-profesores en Slack
+- Responsable @CoriaAlx, suplente @rodrig317-cpu, revisor @Uxbyemiliano
+  (.github/CODEOWNERS)
+
+## No tocar sin consultar
+Los ids de `agentes.json`, `scripts/urls_publicadas.txt`, `src/` (afecta
+las 53 páginas), `benito.html`, `content/`, el repositorio puente
+`ErikV-AG/profesores` y los dominios permitidos en D-ID y ElevenLabs.
+
+## Reglas para trabajar en este repositorio
+- Si un cambio altera la arquitectura, una dependencia externa o un entorno, actualiza docs/blueprint.md en el mismo cambio.
+- Si un cambio implica una decisión de proveedor, alcance o enfoque técnico, crea un registro en docs/decisiones/ con estado propuesto.
+- Nunca escribas credenciales en el repositorio; registra los nombres de variables en .env.example.
+- Al revisar la documentación, actualiza academiaglobal.mx/verificado-el en catalog-info.yaml.

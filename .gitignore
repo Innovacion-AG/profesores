@@ -3,3 +3,6 @@ _site/
 
 # Basura de macOS
 .DS_Store
+
+# Variables locales (no se versionan)
+.env
