@@ -316,5 +316,11 @@
     "did_agent_id": "v2_agt_pEQyVqQq",
     "did_client_key": "ck_1IAxko7B3QW9AOA2ad3Of",
     "elevenlabs_agent_id": "agent_6101m70n9hrtf20r11chqg4wdmke"
+  },
+  "simulacion_sistemas_milton": {
+    "nombre": " Milton Friedman · Simulación de sistemas a escala empresarial",
+    "did_agent_id": "v2_agt_VP438XUB",
+    "did_client_key": "ck_2ZaJdlGhUoSm6hWctbOBh",
+    "elevenlabs_agent_id": "agent_5901m7wyza89epsagt33hqbnja7n"
   }
 }
