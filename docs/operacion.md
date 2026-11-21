@@ -33,6 +33,17 @@ Consultar con el responsable antes de cambiar:
    Pages tarda hasta 10 minutos en refrescar su caché.
 5. Abrir https://innovacion-ag.github.io/profesores/lista.html y probar el
    agente cambiado.
+6. Si es un alta, pegar el código de inserción en la
+   [Cédula de Seguimiento de materias](https://docs.google.com/spreadsheets/d/1I9YYzEdpFYIqBMzy-pgykguDBPYmFZ15uAWOYCB8ObA/edit#gid=764442467)
+   de DEA, hoja «Personajes cod», columna «Código de insersión», en la fila
+   de la materia:
+   - Copiarlo de `lista.html` con el botón **Copiar iframe** del agente; no
+     escribirlo a mano ni copiarlo de otra fila.
+   - Comprobar que el `src` empiece con
+     `https://innovacion-ag.github.io/profesores/`. Las filas anteriores a
+     la migración tienen `erikv-ag.github.io`: siguen funcionando por el
+     puente, pero no se usan para altas nuevas.
+   - Con el código en la Cédula, DEA activa el agente en Rise.
 
 Para borrar un agente a propósito: quitarlo de `agentes.json`, y luego
 Actions › Publicar › Run workflow con la casilla «permitir borrar». Si está
@@ -81,7 +92,7 @@ No hay respaldos que programar: todo el contenido está en git.
 | Suplente | @rodrig317-cpu |
 | Supervisor y revisor | @ErikV-AG |
 | Patrocinio | DEA |
-| Área usuaria | DEA: asigna los personajes, monta los agentes en Rise y da seguimiento en la cédula |
+| Área usuaria | DEA: asigna los personajes, monta los agentes en Rise y da seguimiento en la Cédula de Seguimiento de materias, hoja «Personajes cod» (fuente del plan; ver el blueprint, sección 4) |
 | Proveedor de video | D-ID. PENDIENTE: ¿canal de soporte y titular de la cuenta? |
 | Proveedor de voz | ElevenLabs. PENDIENTE: ¿canal de soporte y titular de la cuenta? |
 | Canal | `#proj-profesores` en Slack |

@@ -31,6 +31,10 @@ metadata:
     - url: https://drive.google.com/drive/folders/1HXtWZWCgBk6wj0-Q4GHy_we8GcY26FaU
       title: Carpeta de Drive
       type: ejecutivo
+    # Fuente del plan de personajes (DEA); agentes.json es la fuente de lo publicado
+    - url: https://docs.google.com/spreadsheets/d/1I9YYzEdpFYIqBMzy-pgykguDBPYmFZ15uAWOYCB8ObA/edit#gid=764442467
+      title: Cédula de Seguimiento de materias de DEA (hoja «Personajes cod»)
+      type: ejecutivo
 spec:
   type: agente
   # estado=operacion (equivale a production); criticidad=media; cliente=interno
