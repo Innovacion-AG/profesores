@@ -111,6 +111,7 @@ código de inserción (columna «Código de insersión»).
 
 Una materia puede estar en la Cédula sin agente publicado todavía. Un agente
 publicado sin fila en la Cédula es un hueco en el seguimiento de DEA.
+Ver la [decisión 0006](decisiones/0006-la-cedula-de-dea-es-la-fuente-del-plan-de-personajes-y-agentes-json-la-de-lo-publicado.md).
 
 ```mermaid
 sequenceDiagram
