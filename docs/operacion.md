@@ -66,10 +66,64 @@ en `scripts/urls_publicadas.txt`, quitar también su línea.
 | --- | --- | --- |
 | Publicación en rojo | Actions › Publicar; GitHub puede avisar por correo a quien lanzó la ejecución, según su configuración de notificaciones | Leer el error en el resumen de la ejecución y corregir `agentes.json`. |
 | Agentes en respaldo de ElevenLabs o con aviso «no disponible» | Consola del navegador, mensajes con prefijo `[agente]` | Revisar créditos y sesiones de D-ID en el tablero de la cuenta «Proyectos Innovación». |
+| `cierre forzado de D-ID (tope …)` frecuente, o conexiones de D-ID sin la marca «(D-ID)» | Consola del navegador, mensajes `[agente]` (ver [Cierre de sesiones](#cierre-de-sesiones)) | Revisar si el embed de D-ID cambió y ajustar `DOMINIOS_DID` o `colgarDID()` en `src/agente.js` por PR. |
 | «Alta demanda» o sala de espera frecuente | Reportes de DEA o de alumnos | Revisar las sesiones simultáneas del plan de D-ID. |
 | Una URL antigua no carga | Abrir `https://erikv-ag.github.io/profesores/<id>.html` | Revisar que `ErikV-AG/profesores` exista y tenga GitHub Pages activo. |
 
 PENDIENTE: ¿quién recibe los reportes de falla de DEA y por qué canal, además de `#proj-profesores`?
+
+## Cierre de sesiones
+
+Una sesión de D-ID abierta ocupa un lugar del plan. El siguiente alumno
+cae en la sala de espera o ve «Alta demanda». La página cuelga D-ID en
+estos casos (decisión 0007):
+
+| Momento | Qué hace la página |
+| --- | --- |
+| D-ID no opera y se cambia a ElevenLabs o al aviso | Cuelga D-ID primero: pulsa «End call» si está a la vista, quita el contenedor de D-ID (el embed se desmonta y cuelga solo) y espera hasta 3 s. Lo que siga abierto lo cierra a la fuerza. Después monta ElevenLabs o el aviso. |
+| D-ID conecta después del cambio | Cierra esa conexión en cuanto aparece, sin tocar las de ElevenLabs. |
+| «✕ Terminar» sin «End call» a la vista, o «Intentar de nuevo» | Cuelga D-ID y, ya colgado, recarga. |
+| El alumno sale (cambia de lección, cierra la pestaña, recarga, va atrás) | En `pagehide`: pulsa «End call», cierra lo de D-ID y cierra ElevenLabs. |
+
+Una conexión cuenta como de D-ID por su destino: `*.d-id.com` o LiveKit
+Cloud (`*.livekit.cloud`, `*.livekit.run`). Lo que va a `*.elevenlabs.io`
+nunca se cierra como D-ID.
+
+ElevenLabs arranca solo únicamente si el alumno acaba de tocar la página;
+si no, queda listo y el alumno pulsa «Iniciar conversación».
+
+### Qué buscar en la consola (mensajes `[agente]`)
+
+| Mensaje | Qué significa |
+| --- | --- |
+| `conexión abierta: ws … (D-ID)` / `pc … (D-ID)` | Conexión registrada y reconocida como de D-ID. Sin «(D-ID)», la página no la cerrará. Si D-ID usa un dominio nuevo, aparece aquí sin la marca: hay que agregarlo a `DOMINIOS_DID` en `src/agente.js`. |
+| `colgando D-ID (motivo); conexión: …` | Empieza el cierre previo al respaldo. |
+| `se pulsó «End call» de D-ID` | Se usó el cierre propio de D-ID: los agentes anteriores a V4 envían el DELETE. |
+| `D-ID colgado en N ms` | D-ID cerró todo dentro del tope. Es lo esperado. |
+| `cierre forzado de D-ID (tope de 3 s): …` | D-ID no cerró a tiempo y la página cerró lo que quedaba. Si se repite, revisar si el embed cambió. |
+| `conexión tardía de D-ID cerrada: …` o `D-ID avisó «connected» después de colgar` | D-ID conectó después del cambio y se cerró. |
+| `salida de la página (pagehide)` | Cierre al salir. Le siguen el cierre forzado y `ElevenLabs cerrado (salida de la página)` si había conversación. |
+
+Los logs muestran solo el host de cada conexión, nunca la URL: la de D-ID
+lleva la client key.
+
+### Qué no se puede garantizar
+
+- **Al quitar Rise el iframe** (cambio de lección), la página tiene solo el
+  evento `pagehide` y no puede esperar:
+  - La página pulsa «End call», pero el DELETE que envían los agentes
+    anteriores a V4 sale con un `fetch` del SDK de D-ID que muere con la
+    página: en las pruebas simuladas no llegó en ninguno de 4 desmontajes.
+    La salida de la sala de los agentes de LiveKit va por su WebSocket y
+    llegó en 3 de 4.
+  - El navegador sí corta las conexiones de inmediato. D-ID libera la
+    sesión según su propio tiempo de expiración, que no controlamos.
+  - Lo mismo aplica con el puente de las direcciones anteriores: es un
+    nivel más de iframe y se comporta igual.
+- **Si D-ID cambia** sus dominios o la forma en que el embed se desmonta,
+  el cierre forzado puede dejar de reconocer sus conexiones. Los logs de
+  arriba lo muestran.
+- **Rise**: lo que hace al cambiar de lección no se puede modificar.
 
 ## Tareas periódicas
 

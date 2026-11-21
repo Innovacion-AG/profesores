@@ -19,7 +19,14 @@
           horizontales más anchas que eso (como el iframe de 350 px de alto
           en Rise), el video cubre todo el ancho y recorta un poco arriba y
           abajo, protegiendo la cabeza. En celulares y pantallas verticales
-          no se toca nada. Para desactivarlo: RELLENAR_ANCHO = false. -->
+          no se toca nada. Para desactivarlo: RELLENAR_ANCHO = false.
+       3. Registro de conexiones y micrófono: anota cada RTCPeerConnection,
+          WebSocket y pista de getUserMedia que se abre en la página, para
+          que agente.js pueda colgar las de D-ID (ver colgarDID()). Solo
+          registra: la llamada original se hace igual y devuelve lo mismo;
+          si algo falla al registrar, se ignora. De cada conexión se guarda
+          solo el host, nunca la URL completa (la de D-ID lleva la client
+          key). -->
   <script>
     (function () {
       var RELLENAR_ANCHO = true;
@@ -48,6 +55,80 @@
         st.textContent = CSS_RELLENO;
         document.head.appendChild(st);
       }
+    })();
+
+    (function () {
+      var registro = window.__registroAgente = { pcs: [], sockets: [], pistas: [], alRegistrar: null };
+
+      function anotar(fn) { try { fn(); } catch (e) { /* registrar nunca rompe la llamada */ } }
+      function avisar(entrada) {
+        anotar(function () { if (typeof registro.alRegistrar === 'function') registro.alRegistrar(entrada); });
+      }
+      // ¿La llamada viene del código de D-ID? (para el micrófono, que no tiene destino)
+      function desdeDID() { return /agent\.d-id\.com/.test(String(new Error().stack || '')); }
+      function hostDe(url) {
+        // turn:host:3478?transport=udp, stun:host, wss://host/ruta?...
+        var m = /^[a-z]+:(?:\/\/)?(?:[^@\/?]*@)?(\[[^\]]+\]|[^:\/?#]+)/i.exec(String(url));
+        return m ? m[1].toLowerCase() : '';
+      }
+
+      if (window.RTCPeerConnection) anotar(function () {
+        var Original = window.RTCPeerConnection;
+        var Registrada = class RTCPeerConnection extends Original {
+          constructor() {
+            super(...arguments);
+            var pc = this, config = arguments[0];
+            anotar(function () {
+              var hosts = [];
+              ((config && config.iceServers) || []).forEach(function (s) {
+                [].concat(s.urls || s.url || []).forEach(function (u) { var h = hostDe(u); if (h) hosts.push(h); });
+              });
+              var entrada = { tipo: 'pc', obj: pc, hosts: hosts, t: Date.now(), deDID: desdeDID() };
+              registro.pcs.push(entrada);
+              avisar(entrada);
+            });
+          }
+        };
+        window.RTCPeerConnection = Registrada;
+      });
+
+      if (window.WebSocket) anotar(function () {
+        var Original = window.WebSocket;
+        var Registrado = class WebSocket extends Original {
+          constructor() {
+            super(...arguments);
+            var ws = this, url = arguments[0];
+            anotar(function () {
+              var entrada = { tipo: 'ws', obj: ws, hosts: [new URL(String(url), location.href).hostname.toLowerCase()], t: Date.now(), deDID: desdeDID() };
+              registro.sockets.push(entrada);
+              avisar(entrada);
+            });
+          }
+        };
+        window.WebSocket = Registrado;
+      });
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) anotar(function () {
+        var md = navigator.mediaDevices;
+        var original = md.getUserMedia;
+        md.getUserMedia = function () {
+          var t = Date.now(), deDID = false;
+          anotar(function () { deDID = desdeDID(); });
+          var promesa = original.apply(this || md, arguments);
+          anotar(function () {
+            promesa.then(function (stream) {
+              anotar(function () {
+                stream.getTracks().forEach(function (pista) {
+                  var entrada = { tipo: 'pista', obj: pista, hosts: [], t: t, deDID: deDID };
+                  registro.pistas.push(entrada);
+                  avisar(entrada);
+                });
+              });
+            }, function () { /* el error lo recibe quien llamó */ });
+          });
+          return promesa;
+        };
+      });
     })();
   </script>
 

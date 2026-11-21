@@ -14,9 +14,10 @@
      4. Espera a que el alumno pulse «Iniciar conversación» (sin clic
         automático).
      5. Compuerta: si D-ID no opera (sin créditos, sin sesiones libres,
-        no carga), cambia al agente de voz de ElevenLabs o, si el agente
-        no tiene uno, muestra un aviso.
-     6. Cierra la sesión al salir para liberar las sesiones del plan.
+        no carga), cuelga D-ID y, ya colgado, cambia al agente de voz de
+        ElevenLabs o, si el agente no tiene uno, muestra un aviso.
+     6. Cuelga D-ID y cierra ElevenLabs al salir de la página, para
+        liberar las sesiones del plan (ver CIERRE DE SESIÓN).
 
    Depuración (parámetro en la URL):
      ?forzar_respaldo=1     dispara la compuerta en cuanto carga D-ID.
@@ -80,6 +81,22 @@
     // forzar el cambio, si D-ID no avisó antes con "connecting".
     const ESPERA_FORZAR_CLIC_MS = 1500;
 
+    // Tope para colgar D-ID antes de montar ElevenLabs o el aviso. El embed
+    // revisa cada 2 s si su contenedor sigue en la página y, al quitarlo,
+    // se desmonta y cuelga; si en este plazo no terminó, se fuerza.
+    const TOPE_COLGAR_MS = 3000;
+
+    // Sin navigator.userActivation: cuánto dura un toque como «reciente».
+    const GESTO_RECIENTE_MS = 5000;
+
+    /* Destinos de las conexiones de D-ID: su API y sus notificaciones
+       (*.d-id.com) y LiveKit Cloud, que usan los agentes de tipo image y
+       expressive (la URL de la sala la entrega D-ID al conectar).
+       ElevenLabs tiene su propio LiveKit (livekit.rtc.elevenlabs.io) y su
+       API: lo que va a elevenlabs.io nunca se trata como D-ID. */
+    const DOMINIOS_DID = ['d-id.com', 'livekit.cloud', 'livekit.run'];
+    const DOMINIOS_ELEVENLABS = ['elevenlabs.io'];
+
     /* Sin clic automático en D-ID. En celulares el navegador solo concede
        el micrófono (y el audio) de forma confiable cuando la persona toca
        la pantalla en ese momento; un toque simulado puede terminar en
@@ -118,7 +135,7 @@
     /* ==================================================================
        ESTADO
     ================================================================== */
-    let modo = 'did';           // 'did' | 'texto' | 'elevenlabs' | 'aviso'
+    let modo = 'did';           // 'did' | 'texto' | 'colgando' | 'elevenlabs' | 'aviso'
     let yaCambio = false;       // la compuerta ya se disparó
     let mostrado = false;       // D-ID ya está a la vista (sin cargador)
     let listoParaUsuario = false;
@@ -131,16 +148,19 @@
     function cadaTanto(fn, ms) { const id = setInterval(fn, ms); intervalos.push(id); return id; }
     function dentroDe(fn, ms) { const id = setTimeout(fn, ms); temporizadores.push(id); return id; }
 
-    /* El alumno ya tocó la página. navigator.userActivation dice si hubo
-       un gesto real; en navegadores sin esa API se lleva la cuenta a mano
-       (los eventos de toque cruzan los shadow roots hasta window). */
-    let tocado = false;
+    /* ¿El alumno acaba de tocar la página? navigator.userActivation.isActive
+       dice si hay un gesto real reciente (unos segundos); en navegadores
+       sin esa API se lleva la cuenta a mano (los eventos de toque cruzan
+       los shadow roots hasta window). No basta con que haya tocado alguna
+       vez: el clic en «Iniciar conversación» de D-ID de hace 30 s no es
+       permiso para abrir el micrófono de ElevenLabs. */
+    let ultimoGesto = 0;
     ['pointerdown', 'touchstart', 'keydown'].forEach(tipo => {
-        window.addEventListener(tipo, () => { tocado = true; }, { capture: true, passive: true });
+        window.addEventListener(tipo, () => { ultimoGesto = Date.now(); }, { capture: true, passive: true });
     });
-    function huboGesto() {
+    function gestoReciente() {
         const ua = navigator.userActivation;
-        return ua ? ua.hasBeenActive : tocado;
+        return ua ? ua.isActive : (Date.now() - ultimoGesto < GESTO_RECIENTE_MS);
     }
 
     /* ==================================================================
@@ -535,7 +555,7 @@
     };
 
     function aplicar() {
-        if (modo === 'elevenlabs' || modo === 'aviso') return;
+        if (modo !== 'did' && modo !== 'texto') return;
         aplicando = true;
         try {
             if (!observados.has(document.body)) {
@@ -823,6 +843,18 @@
         api.events.on('connection', datos => {
             const estado = String((datos && datos.state) || '').toLowerCase();
             console.log(LOG, 'conexión:', estado);
+            estadoDID = estado;
+
+            // D-ID ya se colgó (cambio de agente o salida) y aun así conecta:
+            // se cierra lo que abrió. Las conexiones nuevas también las cierra
+            // el registro (registro.alRegistrar), por su destino.
+            if (yaCambio || cerrada) {
+                if (estado === 'connecting' || estado === 'connected') {
+                    console.warn(LOG, 'D-ID avisó «' + estado + '» después de colgar; se cierra lo que abrió');
+                    forzarCierreDID('conexión tardía');
+                }
+                return;
+            }
             if (modo === 'texto') return;
 
             if (estado === 'connecting') {
@@ -877,9 +909,13 @@
     /* ==================================================================
        COMPUERTA: D-ID no opera → ElevenLabs o aviso
     ================================================================== */
+    /* Primero se cuelga D-ID y después se monta ElevenLabs o el aviso:
+       así no quedan dos sesiones (ni dos micrófonos) abiertas a la vez. */
     function cambiarARespaldo(motivo) {
         if (yaCambio) return;
         yaCambio = true;
+        instanteCambio = Date.now();
+        modo = 'colgando';
         console.warn(LOG, 'D-ID no opera. Motivo:', motivo);
 
         intervalos.forEach(clearInterval);
@@ -888,16 +924,21 @@
         clearTimeout(pendiente);
         observer.disconnect();
 
-        cerrarDID();
-        contenedorDID.hidden = true;
+        const conRespaldo = !!(cfg && cfg.elevenlabs_agent_id);
+        btnTerminar.hidden = true;
+        mostrarCargador(conRespaldo ? 'Cambiando a modo de voz…' : 'Un momento…');
 
-        if (cfg && cfg.elevenlabs_agent_id) {
-            modo = 'elevenlabs';
-            montarElevenLabs();
-        } else {
-            modo = 'aviso';
-            mostrarAviso();
-        }
+        colgarDID(motivo).then(() => {
+            if (cerrada) return;
+            contenedorDID.hidden = true;
+            if (conRespaldo) {
+                modo = 'elevenlabs';
+                montarElevenLabs();
+            } else {
+                modo = 'aviso';
+                mostrarAviso();
+            }
+        });
     }
 
     function mostrarAviso() {
@@ -907,7 +948,12 @@
         console.log(LOG, 'se muestra el aviso «El profesor no está disponible por el momento»');
     }
 
-    btnReintentar.addEventListener('click', () => location.reload());
+    // Antes de recargar, D-ID ya debe estar colgado (normalmente lo está
+    // desde el cambio; si no, se espera con el mismo tope).
+    btnReintentar.addEventListener('click', () => {
+        btnReintentar.disabled = true;
+        colgarDID('«Intentar de nuevo»').then(() => location.reload());
+    });
 
     /* ------------------------------------------------------------------
        Widget de ElevenLabs. Atributos verificados en vivo en
@@ -959,7 +1005,7 @@
         script.type = 'text/javascript';
         script.addEventListener('load', () => {
             mostrarElevenLabs();
-            iniciarElevenLabsSiHuboGesto(widgetEL);
+            iniciarElevenLabsSiGestoReciente(widgetEL);
         });
         script.addEventListener('error', () => {
             console.error(LOG, 'no se pudo cargar el widget de ElevenLabs');
@@ -981,19 +1027,27 @@
         return sr ? Array.from(sr.querySelectorAll('button, [role="button"]')) : [];
     }
 
+    function botonFinEL(widget) {
+        return botonesEL(widget).find(b => {
+            const etiqueta = normalizar(b.getAttribute('aria-label') || b.textContent || '');
+            return (etiqueta === 'terminar conversación' || etiqueta === 'end call' || etiqueta.includes('terminar')) &&
+                esVisible(b);
+        }) || null;
+    }
+
     /* El widget no tiene un método startConversation() en este build
        (verificado en vivo): lo que funciona es pulsar su botón de inicio
-       dentro de su shadow root. Solo se hace si el alumno ya tocó la
-       página; si no, el widget queda listo y el alumno lo inicia (misma
-       razón que AUTO_INICIO).
+       dentro de su shadow root. Solo se hace si el alumno acaba de tocar
+       la página (gestoReciente); si no, el widget queda listo y el alumno
+       lo inicia (misma razón que AUTO_INICIO).
 
        Si el agente tiene activados los términos y condiciones en
        ElevenLabs, al iniciar aparece un diálogo de consentimiento que NO
        se pulsa automáticamente: es una aceptación legal y le corresponde
        a la persona. Se desactiva en el dashboard (Widget → Terms). */
-    function iniciarElevenLabsSiHuboGesto(widget) {
-        if (!huboGesto()) {
-            console.log(LOG, 'ElevenLabs listo; el alumno no ha tocado la página, así que lo inicia él');
+    function iniciarElevenLabsSiGestoReciente(widget) {
+        if (!gestoReciente()) {
+            console.log(LOG, 'ElevenLabs listo; el alumno no acaba de tocar la página, así que lo inicia él');
             return;
         }
         const limite = Date.now() + ESPERA_BOTON_ELEVENLABS_MS;
@@ -1006,7 +1060,7 @@
             if (inicio) {
                 clearInterval(id);
                 inicio.click();
-                console.log(LOG, 'conversación de ElevenLabs iniciada (el alumno ya había tocado la página)');
+                console.log(LOG, 'conversación de ElevenLabs iniciada (el alumno acababa de tocar la página)');
             } else if (Date.now() > limite) {
                 clearInterval(id);
                 console.log(LOG, 'no se encontró el botón de inicio de ElevenLabs; queda el inicio manual');
@@ -1017,26 +1071,111 @@
     /* ==================================================================
        CIERRE DE SESIÓN
 
-       Si la sesión de D-ID queda abierta, sigue ocupando un lugar del
-       plan hasta que D-ID la expira, y el siguiente alumno cae en la sala
-       de espera. Quitar el widget de ElevenLabs del documento cierra su
-       conversación.
+       Una sesión de D-ID abierta ocupa un lugar del plan hasta que D-ID la
+       expira, y el siguiente alumno cae en la sala de espera.
+
+       Qué ofrece el embed v2 (2.2.12, con @d-id/client-sdk 3.0.9): no
+       expone disconnect() ni el estado ni los ids de la sesión. Cuelga por
+       su cuenta en tres casos: con su botón «End call», en su propio
+       beforeunload y cuando se desmonta, lo que hace si su contenedor
+       (#did-agent-container) deja de estar en la página (lo revisa cada
+       2 s). Al colgar, los agentes anteriores a V4 envían DELETE a D-ID
+       solo si ya estaban conectados; los de LiveKit salen de la sala.
+
+       Por eso colgarDID():
+         1. pulsa «End call» si está a la vista;
+         2. quita el contenedor de D-ID para que el embed se desmonte;
+         3. espera a que se cierre lo de D-ID, con tope TOPE_COLGAR_MS;
+         4. fuerza lo que quede: cierra las conexiones de D-ID (por su
+            destino, ver DOMINIOS_DID) y apaga su micrófono.
+       El registro (src/plantilla.html) anota cada conexión y pista; aquí
+       solo se cierran las de D-ID.
+
+       Al quitar Rise el iframe solo llega pagehide (no beforeunload ni
+       unload) y no hay tiempo de esperar: se hace todo de forma síncrona.
+       El navegador corta además las conexiones al destruir la página,
+       pero el DELETE de D-ID puede no alcanzar a salir: eso no se puede
+       garantizar desde aquí.
     ================================================================== */
-    function cerrarDID() {
-        const candidatos = new Set([
-            document.querySelector('did-agent'),
-            window['did-agent'],
-            window.DID_AGENTS_API,
-            ...contenedorDID.querySelectorAll('*'),
-        ]);
-        for (const a of candidatos) {
-            if (!a || (a.nodeType === 1 && !a.localName.includes('-'))) continue;
-            for (const m of ['disconnect', 'destroy', 'close']) {
-                try { if (typeof a[m] === 'function') a[m](); } catch (e) { /* sin consecuencia */ }
-            }
+    const registro = window.__registroAgente || { pcs: [], sockets: [], pistas: [] };
+    let instanteCambio = 0;     // cuándo se disparó la compuerta
+    let estadoDID = 'new';      // último estado de "connection" de D-ID
+    let cerrada = false;        // la página ya se está yendo
+
+    function enDominios(host, dominios) {
+        return dominios.some(d => host === d || host.endsWith('.' + d));
+    }
+
+    // Una conexión es de D-ID por su destino. El micrófono no tiene
+    // destino: es de D-ID si lo pidió el código de D-ID o si se pidió
+    // antes del cambio, cuando ElevenLabs todavía no existía.
+    function esDeDID(entrada) {
+        if (entrada.tipo === 'pista') return entrada.deDID || !instanteCambio || entrada.t < instanteCambio;
+        if (entrada.hosts.some(h => enDominios(h, DOMINIOS_ELEVENLABS))) return false;
+        return entrada.hosts.some(h => enDominios(h, DOMINIOS_DID));
+    }
+    function esDeElevenLabs(entrada) {
+        if (entrada.tipo === 'pista') return !esDeDID(entrada);
+        return entrada.hosts.some(h => enDominios(h, DOMINIOS_ELEVENLABS));
+    }
+
+    function abierta(entrada) {
+        const o = entrada.obj;
+        try {
+            if (entrada.tipo === 'pc') return o.signalingState !== 'closed';
+            if (entrada.tipo === 'ws') return o.readyState === 0 || o.readyState === 1;
+            return o.readyState === 'live';
+        } catch (e) { return false; }
+    }
+
+    function cerrarEntrada(entrada) {
+        try {
+            if (entrada.tipo === 'pc') entrada.obj.close();
+            else if (entrada.tipo === 'ws') entrada.obj.close(1000);
+            else entrada.obj.stop();
+        } catch (e) { /* sin consecuencia */ }
+    }
+
+    function todas() { return [...(registro.pcs || []), ...(registro.sockets || []), ...(registro.pistas || [])]; }
+    function abiertasDe(criterio) { return todas().filter(e => abierta(e) && criterio(e)); }
+
+    // Para los logs: tipo y host, nunca la URL (la de D-ID lleva la key).
+    function describir(lista) {
+        return lista.map(e => (e.tipo === 'pista' ? 'micrófono' : e.tipo + ' ' + (e.hosts.join(',') || 'sin host'))).join('; ');
+    }
+
+    // Conexiones que se abren después del cambio o de la salida: si son de
+    // D-ID se cierran en cuanto quien las creó termina de configurarlas.
+    // Las de ElevenLabs (u otras) no se tocan.
+    registro.alRegistrar = entrada => {
+        if (entrada.tipo !== 'pista') {
+            console.log(LOG, 'conexión abierta: ' + describir([entrada]) + (esDeDID(entrada) ? ' (D-ID)' : ''));
         }
-        for (const raiz of [document, ...raicesDID()]) {
-            if (!raiz.querySelectorAll) continue;
+        if (!(instanteCambio || cerrada) || !esDeDID(entrada)) return;
+        setTimeout(() => {
+            if (!abierta(entrada)) return;
+            cerrarEntrada(entrada);
+            console.warn(LOG, 'conexión tardía de D-ID cerrada: ' + describir([entrada]));
+        }, 0);
+    };
+
+    // Al salir no se exige que se vea: cuando Rise quita el iframe, la
+    // página ya no tiene tamaño y esVisible() da falso aunque el botón esté.
+    function pulsarFinDID(exigirVisible = true) {
+        if (!contenedorDID.isConnected) return false;
+        const fin = buscarEnDID(el => esBotonFin(el) && (!exigirVisible || esVisible(el)));
+        if (!fin) return false;
+        try { fin.click(); } catch (e) { return false; }
+        console.log(LOG, 'se pulsó «End call» de D-ID');
+        return true;
+    }
+
+    function forzarCierreDID(motivo) {
+        const lista = abiertasDe(esDeDID);
+        lista.forEach(cerrarEntrada);
+        // El video que llega de D-ID (vive en el shadow root del contenedor)
+        for (const raiz of [document, contenedorDID.shadowRoot, ...raicesDID()]) {
+            if (!raiz || !raiz.querySelectorAll) continue;
             raiz.querySelectorAll('video').forEach(v => {
                 try {
                     const st = v.srcObject;
@@ -1044,22 +1183,70 @@
                 } catch (e) { /* sin consecuencia */ }
             });
         }
+        if (lista.length) console.log(LOG, 'cierre forzado de D-ID (' + motivo + '): ' + describir(lista));
+        return lista.length;
     }
 
-    function cerrarElevenLabs() {
-        if (widgetEL) {
-            widgetEL.remove();
-            widgetEL = null;
-        }
+    let colgando = null;
+    function colgarDID(motivo) {
+        if (colgando) return colgando;
+        colgando = new Promise(resolver => {
+            const activa = estadoDID === 'connecting' || estadoDID === 'connected';
+            const pendientes = abiertasDe(esDeDID);
+            if (activa || pendientes.length) {
+                console.log(LOG, 'colgando D-ID (' + motivo + '); conexión: ' + estadoDID +
+                    (pendientes.length ? '; abiertas: ' + describir(pendientes) : ''));
+                pulsarFinDID();
+            }
+            // Sin contenedor, el embed se desmonta y cuelga; tampoco puede
+            // completar una conexión tardía a la vista.
+            if (contenedorDID.isConnected) contenedorDID.remove();
+            if (!activa && !pendientes.length) { resolver(); return; }
+
+            const inicio = Date.now();
+            const id = setInterval(() => {
+                const quedan = abiertasDe(esDeDID).length;
+                const conexionCerrada = estadoDID !== 'connecting' && estadoDID !== 'connected';
+                // Si el embed no avisa "disconnected", basta con que se haya
+                // cerrado todo lo de D-ID que llegó a registrarse.
+                const huboRegistradas = todas().some(e => e.tipo !== 'pista' && esDeDID(e));
+                const listo = !quedan && (conexionCerrada || huboRegistradas);
+                if (!listo && Date.now() - inicio < TOPE_COLGAR_MS) return;
+                clearInterval(id);
+                if (listo) console.log(LOG, 'D-ID colgado en ' + (Date.now() - inicio) + ' ms');
+                else forzarCierreDID('tope de ' + TOPE_COLGAR_MS / 1000 + ' s');
+                resolver();
+            }, 100);
+        });
+        return colgando;
     }
 
-    let cerrada = false;
-    function cerrarSesion() {
+    function cerrarElevenLabs(motivo) {
+        if (!widgetEL) return false;
+        const fin = botonFinEL(widgetEL);
+        if (fin) { try { fin.click(); } catch (e) { /* sin consecuencia */ } }
+        widgetEL.remove();
+        widgetEL = null;
+        // Lo que el widget haya dejado abierto hacia ElevenLabs y su micrófono
+        const restantes = abiertasDe(esDeElevenLabs);
+        restantes.forEach(cerrarEntrada);
+        console.log(LOG, 'ElevenLabs cerrado (' + motivo + ')' + (fin ? '; se pulsó su botón de fin' : '') +
+            (restantes.length ? '; ' + describir(restantes) : ''));
+        return true;
+    }
+
+    // Salida de la página: pagehide llega siempre (recarga, navegación,
+    // caché del navegador y cuando Rise quita el iframe); beforeunload no
+    // llega al quitar el iframe y unload está bloqueado en Chrome. Todo
+    // síncrono: la página no espera.
+    function cerrarSesion(e) {
         if (cerrada) return;
         cerrada = true;
         intervalos.forEach(clearInterval);
-        cerrarDID();
-        cerrarElevenLabs();
+        console.log(LOG, 'salida de la página (' + e.type + (e.persisted ? ', a la caché del navegador' : '') + ')');
+        pulsarFinDID(false);
+        forzarCierreDID('salida de la página');
+        cerrarElevenLabs('salida de la página');
     }
     window.addEventListener('pagehide', cerrarSesion);
     window.addEventListener('beforeunload', cerrarSesion);
@@ -1075,11 +1262,7 @@
     ================================================================== */
     btnTerminar.addEventListener('click', () => {
         if (modo === 'elevenlabs') {
-            const fin = botonesEL(widgetEL).find(b => {
-                const etiqueta = normalizar(b.getAttribute('aria-label') || b.textContent || '');
-                return (etiqueta === 'terminar conversación' || etiqueta === 'end call' || etiqueta.includes('terminar')) &&
-                    esVisible(b);
-            });
+            const fin = botonFinEL(widgetEL);
             if (fin) {
                 fin.click();
                 return;
@@ -1089,19 +1272,17 @@
             // recarga: el alumno tendría que esperar a que D-ID vuelva a
             // fallar.
             console.log(LOG, 'se reinicia el widget de ElevenLabs');
-            cerrarElevenLabs();
+            cerrarElevenLabs('«✕ Terminar» sin botón de fin a la vista');
             widgetEL = crearWidget();
             contenedorEL.appendChild(widgetEL);
             return;
         }
 
-        const fin = buscarEnDID(el => esBotonFin(el) && esVisible(el));
-        if (fin) {
-            fin.click();
-        } else {
-            cerrarDID();
-            location.reload();
-        }
+        if (pulsarFinDID()) return;
+        // Sin «End call» a la vista: se cuelga y, ya colgado, se recarga.
+        btnTerminar.hidden = true;
+        mostrarCargador('Terminando…');
+        colgarDID('«✕ Terminar» sin «End call» a la vista').then(() => location.reload());
     });
 
     /* ==================================================================
