@@ -6,7 +6,8 @@ alumno conversa por voz o texto dentro de los cursos de Articulate Rise 360
 Rise inserta por iframe. El agente principal es de D-ID; si D-ID no opera,
 la página cambia sola a un agente de voz de ElevenLabs.
 
-- Área usuaria: DEA, que asigna los personajes y da seguimiento en la cédula.
+- Área usuaria: DEA, que asigna los personajes y da seguimiento en la
+  Cédula de Seguimiento de materias (ver [Plan de personajes](#4-plan-de-personajes)).
 - Patrocinio: DEA.
 - Cliente: interno. UCC y GRG son clientes de algunos diplomados (ids
   `diplomadoIA-*-UCC_*` y `diplomadoIA-*-GRG_*`).
@@ -29,6 +30,9 @@ flowchart LR
   sitio --> el[(ElevenLabs<br/>agente de voz de respaldo)]
   editor([Equipo de Innovación]) -->|edita agentes.json| gh[Repositorio Innovacion-AG/profesores]
   gh -->|GitHub Actions| sitio
+  dea([DEA]) -->|asigna personaje y fecha de activación| cedula[(Cédula de Seguimiento<br/>hoja «Personajes cod»)]
+  editor -->|pega el código de inserción| cedula
+  dea -->|activa el agente| rise
 ```
 
 ## 2. Contenedores (C4, nivel 2)
@@ -92,7 +96,41 @@ Si el agente no tiene `elevenlabs_agent_id` (13 de 53), la página muestra
 el chat de texto de D-ID o el aviso «El profesor no está disponible por el
 momento».
 
-## 4. Dependencias externas
+## 4. Plan de personajes
+
+El plan de personajes vive fuera del repositorio, en la
+[Cédula de Seguimiento de materias](https://docs.google.com/spreadsheets/d/1I9YYzEdpFYIqBMzy-pgykguDBPYmFZ15uAWOYCB8ObA/edit#gid=764442467)
+de DEA, hoja «Personajes cod». Cada fila es una materia con su personaje,
+su fecha de activación (columna «ACTIVACIÓN (INICIO EN CAMPUS)») y su
+código de inserción (columna «Código de insersión»).
+
+- **La Cédula es la fuente del plan**: qué personaje lleva cada materia y
+  cuándo se activa.
+- **`agentes.json` es la fuente de lo publicado**: qué agentes existen en el
+  sitio y con qué ids de D-ID y ElevenLabs.
+
+Una materia puede estar en la Cédula sin agente publicado todavía. Un agente
+publicado sin fila en la Cédula es un hueco en el seguimiento de DEA.
+Ver la [decisión 0006](decisiones/0006-la-cedula-de-dea-es-la-fuente-del-plan-de-personajes-y-agentes-json-la-de-lo-publicado.md).
+
+```mermaid
+sequenceDiagram
+  participant DEA
+  participant Cedula as Cédula (hoja «Personajes cod»)
+  participant Inn as Innovación
+  participant Prov as D-ID y ElevenLabs
+  participant Repo as agentes.json
+  participant Rise
+  DEA->>Cedula: asigna el personaje y la fecha de activación
+  Inn->>Inn: produce el video del personaje
+  Inn->>Prov: crea el agente en D-ID y en ElevenLabs
+  Inn->>Repo: da de alta el agente (commit directo en main)
+  Repo-->>Inn: Actions publica id.html y lista.html
+  Inn->>Cedula: pega el código de inserción copiado de lista.html
+  DEA->>Rise: activa el agente pegando el código en la materia
+```
+
+## 5. Dependencias externas
 
 | Servicio | Uso | Cuenta titular | Plan | Ubicación de la credencial |
 | --- | --- | --- | --- | --- |
@@ -103,9 +141,10 @@ momento».
 | unpkg.com | Entrega el script del widget de ElevenLabs. | Servicio público | Gratuito | No aplica |
 | Google Fonts | Tipografías de `tablero.html`. | Servicio público | Gratuito | No aplica |
 | Vimeo | Video de introducción de `benito.html`, página que ya no sigue en uso. | PENDIENTE: ¿cuenta titular del video? | PENDIENTE: ¿qué plan? | Gestor de contraseñas del área, grupo profesores |
+| Google Sheets | Cédula de Seguimiento de materias de DEA, hoja «Personajes cod»: plan de personajes y códigos de inserción. Fuera de este repositorio. | DEA | Google Workspace de la institución | Acceso con la cuenta institucional |
 | Articulate Rise 360 | Cursos que insertan los agentes por iframe. El montaje lo hace DEA. | PENDIENTE: ¿cuenta de DEA? | PENDIENTE | Fuera de este repositorio |
 
-## 5. Entornos
+## 6. Entornos
 
 | Entorno | Dirección | Despliegue |
 | --- | --- | --- |
@@ -114,7 +153,7 @@ momento».
 | Revisión de PR | Checks del PR | `publicar.yml` valida y construye sin publicar. |
 | Local | http://localhost:8000/lista.html | `python3 scripts/servidor.py`. D-ID no conecta desde `localhost`. |
 
-## 6. Datos
+## 7. Datos
 
 - El sitio no guarda datos: no hay formularios, base de datos ni
   almacenamiento en el navegador.
@@ -129,7 +168,7 @@ momento».
   protegidas por la lista de dominios permitidos y se publican en cada
   página por diseño.
 
-## 7. Riesgos y deuda técnica
+## 8. Riesgos y deuda técnica
 
 Los riesgos y la deuda técnica del proyecto se registran en el registro
 RAID de la bitácora ejecutiva (acceso interno). Para consultarlo o
