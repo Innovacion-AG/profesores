@@ -5,8 +5,12 @@ Uso:
     python3 scripts/construir.py             valida y genera _site/
     python3 scripts/construir.py --validar   solo valida
     python3 scripts/construir.py --prueba    valida y genera prueba/ con
-                                             tres agentes (prueba en el
-                                             dominio publicado)
+                                             los agentes de AGENTES_PRUEBA
+                                             (prueba en el dominio
+                                             publicado)
+
+Si la carpeta prueba/ existe en el repositorio, se publica tal cual en
+/prueba/ con un aviso. Se borra al terminar la prueba.
 
 Variables de entorno:
     COMPARAR_CON       referencia de git contra la que se buscan agentes
@@ -48,8 +52,10 @@ URL_IDS_PUBLICADOS = URL_BASE + 'ids-publicados.json'
 # Se copian tal cual al sitio, sin modificarlos.
 COPIAS_TAL_CUAL = ['benito.html', 'content']
 
-# Agentes que genera --prueba.
-AGENTES_PRUEBA = ['tecnologia_transformacion_alan', 'calculo_alan', 'fisica_curie']
+# Agentes que genera --prueba: anteriores a V4 (talk) con ElevenLabs, uno
+# de LiveKit (image) y uno sin ElevenLabs (camino del aviso).
+AGENTES_PRUEBA = ['tecnologia_transformacion_alan', 'calculo_alan', 'fisica_curie',
+                  'publicidad_ogilvy', 'algebra_alan']
 
 # Nombres que ya usa el sitio: un agente con alguno de estos ids
 # chocaría con un archivo existente.
@@ -720,6 +726,14 @@ def construir_sitio(reg, agentes):
     # Validar ya revisó que ninguno choque con una página generada.
     for nombre in html_sueltos():
         shutil.copy2(RAIZ / nombre, SALIDA / nombre)
+
+    # Páginas de prueba (generadas con --prueba desde una rama): se publican
+    # tal cual en /prueba/ para probar un cambio en el dominio real sin
+    # tocar las páginas de los cursos.
+    if CARPETA_PRUEBA.is_dir():
+        shutil.copytree(CARPETA_PRUEBA, SALIDA / 'prueba', ignore=shutil.ignore_patterns('.DS_Store'))
+        reg.aviso('se publica prueba/ en %sprueba/ (páginas de prueba); bórrala del repositorio al terminar la prueba'
+                  % URL_BASE)
     return True
 
 

@@ -49,6 +49,22 @@ Para borrar un agente a propósito: quitarlo de `agentes.json`, y luego
 Actions › Publicar › Run workflow con la casilla «permitir borrar». Si está
 en `scripts/urls_publicadas.txt`, quitar también su línea.
 
+## Probar un cambio en el dominio real (`prueba/`)
+
+D-ID solo conecta desde los dominios permitidos. Un cambio a `src/` se
+prueba en https://innovacion-ag.github.io/profesores/prueba/ antes de
+llegar a las páginas de los cursos:
+
+1. En la rama del cambio, ejecutar `python3 scripts/construir.py --prueba`.
+   Genera `prueba/` con los agentes de `AGENTES_PRUEBA` (en
+   `scripts/construir.py`) y el `src/` de esa rama.
+2. Llevar solo la carpeta `prueba/` a `main` con un PR aparte. Si `prueba/`
+   existe, la construcción la publica tal cual en `/prueba/`, con un aviso
+   en Actions. Las páginas de producción no cambian.
+3. Probar en `prueba/iframes.html`, con los agentes en un iframe de 350 px
+   como en Rise, y en cada página de agente.
+4. Al integrar el cambio, borrar `prueba/` en el mismo PR.
+
 ## Reversión
 
 - Cambio que entró por PR: abrir el PR integrado, pulsar **Revert** e
