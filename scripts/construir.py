@@ -823,6 +823,13 @@ def construir_prueba(reg, agentes):
         shutil.rmtree(CARPETA_PRUEBA)
     CARPETA_PRUEBA.mkdir()
     escribir_paginas(CARPETA_PRUEBA, plantilla, js, css, {i: agentes[i] for i in AGENTES_PRUEBA})
+    # Las páginas de prueba no deben aparecer en buscadores.
+    for i in AGENTES_PRUEBA:
+        pagina = CARPETA_PRUEBA / (i + '.html')
+        texto = pagina.read_text(encoding='utf-8')
+        pagina.write_text(texto.replace('<meta charset="UTF-8">',
+                                        '<meta charset="UTF-8">\n  <meta name="robots" content="noindex">', 1),
+                          encoding='utf-8')
     bloques = '\n'.join('  <h2>%s</h2>\n  %s' % (html.escape(agentes[i].get('nombre') or i),
                                                  iframe_de(i, URL_BASE + 'prueba/').replace('\n', '\n  '))
                         for i in AGENTES_PRUEBA)
