@@ -19,7 +19,9 @@ Consultar con el responsable antes de cambiar:
 
 1. Según el tipo de cambio:
    - Altas y cambios de agentes en `agentes.json`: commit directo en `main`
-     desde github.com, sin pull request (PR).
+     desde github.com, sin pull request (PR). El proceso completo de un
+     alta, desde la Cédula hasta la entrega a DEA, está en
+     [alta de un agente](alta-de-agente.md).
    - Cambios a `src/`, a `scripts/` o a la publicación (`.github/`): rama
      nueva y PR contra `main`. En el PR, el check «Validar y construir» corre
      `node --check src/agente.js` y `python3 scripts/construir.py`.

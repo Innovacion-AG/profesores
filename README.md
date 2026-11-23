@@ -82,6 +82,9 @@ Canal `#proj-profesores` en Slack.
 
 ## Agregar o cambiar un agente
 
+Para el proceso completo, desde la Cédula hasta la entrega a DEA, ver
+[docs/alta-de-agente.md](docs/alta-de-agente.md).
+
 1. Abre [`agentes.json`](agentes.json) y pulsa el lápiz (**Edit this file**).
 2. Copia un bloque existente y cámbialo. Ejemplo:
 
