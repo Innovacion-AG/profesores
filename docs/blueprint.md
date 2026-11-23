@@ -47,7 +47,7 @@ flowchart LR
     flujo[.github/workflows/publicar.yml]
   end
   subgraph pages[GitHub Pages]
-    paginas[53 páginas de agente<br/>id.html]
+    paginas[Una página por agente<br/>id.html]
     lista_html[lista.html]
     tablero[tablero.html]
     ids[ids-publicados.json]
@@ -102,7 +102,7 @@ al salir de la página. El embed de D-ID no expone una función para
 colgar. Detalle y límites en [operación › Cierre de sesiones](operacion.md#cierre-de-sesiones)
 y en la [decisión 0007](decisiones/0007-se-cuelga-d-id-antes-del-respaldo-y-al-salir-sin-campo-tipo.md).
 
-Si el agente no tiene `elevenlabs_agent_id` (13 de 53), la página muestra
+Si el agente no tiene `elevenlabs_agent_id`, la página muestra
 el chat de texto de D-ID o el aviso «El profesor no está disponible por el
 momento».
 
@@ -145,7 +145,7 @@ sequenceDiagram
 | Servicio | Uso | Cuenta titular | Plan | Ubicación de la credencial |
 | --- | --- | --- | --- | --- |
 | D-ID | Agentes de video (embed v2). Las client keys solo funcionan desde los dominios permitidos: `innovacion-ag.github.io` y `erikv-ag.github.io`. | Cuenta «Proyectos Innovación». PENDIENTE: ¿quién es el titular? | PENDIENTE: ¿qué plan? Los créditos se renuevan el día 18 de cada mes. | Gestor de contraseñas del área, grupo profesores |
-| ElevenLabs | Agente de voz de respaldo (widget `@elevenlabs/convai-widget-embed`). 40 de 53 agentes lo tienen. | Cuenta del área. PENDIENTE: ¿quién es el titular? | PENDIENTE: ¿qué plan y cuándo se renueva? | Gestor de contraseñas del área, grupo profesores |
+| ElevenLabs | Agente de voz de respaldo (widget `@elevenlabs/convai-widget-embed`). Cuántos agentes lo tienen se ve en [tablero.html](https://innovacion-ag.github.io/profesores/tablero.html) (contador y filtro «con respaldo ElevenLabs»). | Cuenta del área. PENDIENTE: ¿quién es el titular? | PENDIENTE: ¿qué plan y cuándo se renueva? | Gestor de contraseñas del área, grupo profesores |
 | HeyGen | Videos de presentación de cada agente. No aparece en el código. | PENDIENTE: ¿cuenta del área titular? | PENDIENTE: ¿qué plan? | Gestor de contraseñas del área, grupo profesores |
 | GitHub Pages y Actions | Construcción y publicación del sitio. | Organización Innovacion-AG | PENDIENTE: ¿plan de la organización? | Sin credenciales propias; Actions usa el token del flujo. |
 | unpkg.com | Entrega el script del widget de ElevenLabs. | Servicio público | Gratuito | No aplica |

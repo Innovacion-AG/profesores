@@ -83,7 +83,8 @@ haría perder el permiso de micrófono, que solo vale para el origen del `src`.
 
 ## No tocar sin consultar
 Los ids de `agentes.json`, `scripts/urls_publicadas.txt`, `src/` (afecta
-las 53 páginas), `benito.html`, `content/`, el repositorio puente
+a todas las páginas de agente; la lista al día está en lista.html),
+`benito.html`, `content/`, el repositorio puente
 `ErikV-AG/profesores` y los dominios permitidos en D-ID y ElevenLabs.
 
 ## Reglas para trabajar en este repositorio

@@ -10,7 +10,8 @@ Consultar con el responsable antes de cambiar:
 
 - Los ids (llaves) de `agentes.json`: cada uno es la URL de un iframe en un curso de Rise.
 - `scripts/urls_publicadas.txt`.
-- `src/`: la plantilla, la lógica y el estilo afectan las 53 páginas a la vez.
+- `src/`: la plantilla, la lógica y el estilo afectan a todas las páginas de
+  agente a la vez ([lista.html](https://innovacion-ag.github.io/profesores/lista.html) tiene la lista al día).
 - `benito.html` y `content/`.
 - El repositorio puente `ErikV-AG/profesores`.
 - Los dominios permitidos en D-ID y ElevenLabs.
