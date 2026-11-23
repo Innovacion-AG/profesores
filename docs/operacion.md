@@ -82,10 +82,82 @@ llegar a las páginas de los cursos:
 | --- | --- | --- |
 | Publicación en rojo | Actions › Publicar; GitHub puede avisar por correo a quien lanzó la ejecución, según su configuración de notificaciones | Leer el error en el resumen de la ejecución y corregir `agentes.json`. |
 | Agentes en respaldo de ElevenLabs o con aviso «no disponible» | Consola del navegador, mensajes con prefijo `[agente]` | Revisar créditos y sesiones de D-ID en el tablero de la cuenta «Proyectos Innovación». |
+| Cambios a ElevenLabs sin `D-ID colgó solo` después, o conexiones de D-ID sin la marca «(D-ID)» | Consola del navegador, mensajes `[agente]` (ver [Cierre de sesiones](#cierre-de-sesiones)) | Revisar si el embed de D-ID cambió y ajustar `DOMINIOS_DID` o `colgarDID()` en `src/agente.js` por PR. |
 | «Alta demanda» o sala de espera frecuente | Reportes de DEA o de alumnos | Revisar las sesiones simultáneas del plan de D-ID. |
 | Una URL antigua no carga | Abrir `https://erikv-ag.github.io/profesores/<id>.html` | Revisar que `ErikV-AG/profesores` exista y tenga GitHub Pages activo. |
 
 PENDIENTE: ¿quién recibe los reportes de falla de DEA y por qué canal, además de `#proj-profesores`?
+
+## Cierre de sesiones
+
+Una sesión de D-ID abierta ocupa un lugar del plan. El siguiente alumno
+cae en la sala de espera o ve «Alta demanda». La página cuelga D-ID en
+estos casos (decisión 0007):
+
+| Momento | Qué hace la página |
+| --- | --- |
+| D-ID no opera y se cambia a ElevenLabs o al aviso | Cuelga D-ID primero: pulsa «End call» si está a la vista, quita el contenedor de D-ID (el embed se desmonta y cuelga solo) y espera hasta 3 s. Si sigue abierto, apaga su micrófono y deja que cuelgue solo. Después monta ElevenLabs o el aviso. |
+| D-ID termina de conectar después del cambio | No le corta la conexión: D-ID reintentaría con una sesión nueva. Apaga su micrófono y espera a que cuelgue solo; si a los 5 s de conectar sigue conectado, le vuelve a pedir colgar. No toca ElevenLabs. |
+| «✕ Terminar» sin «End call» a la vista, o «Intentar de nuevo» | Cuelga D-ID y, ya colgado, recarga. |
+| El alumno sale (cambia de lección, cierra la pestaña, recarga, va atrás) | En `pagehide`: pulsa «End call», cierra lo de D-ID y cierra ElevenLabs. |
+
+Una conexión cuenta como de D-ID si va a `*.d-id.com` o a LiveKit Cloud
+(`*.livekit.cloud`, `*.livekit.run`), o si la creó el código del embed
+(`agent.d-id.com`). Lo segundo cubre el video de los agentes talk, que va
+por el TURN de Cloudflare; la conexión de LiveKit, que se crea sin
+servidores, y el dictado (`*.stt.speech.microsoft.com`). Lo que va a
+`*.elevenlabs.io` nunca se cierra como D-ID.
+
+ElevenLabs arranca solo únicamente si el alumno acaba de tocar la página;
+si no, queda listo y el alumno pulsa «Iniciar conversación».
+
+### Qué buscar en la consola (mensajes `[agente]`)
+
+| Mensaje | Qué significa |
+| --- | --- |
+| `conexión abierta: ws … (D-ID)` / `pc … (D-ID)` | Conexión registrada y reconocida como de D-ID. Sin «(D-ID)», la página no la cerrará. Si una conexión de D-ID aparece sin la marca, hay que agregar su dominio a `DOMINIOS_DID` en `src/agente.js`. |
+| `colgando D-ID (motivo); conexión: …` | Empieza el cierre previo al respaldo. |
+| `se pulsó «End call» de D-ID` | Se usó el cierre propio de D-ID: los agentes anteriores a V4 envían el DELETE (que hoy responde 400; ver abajo). |
+| `D-ID colgado en N ms` | D-ID cerró todo dentro del tope. Es lo esperado. |
+| `D-ID sigue abierto a los 3 s (…); se deja que cuelgue solo` | D-ID seguía conectando al cambiar. Es normal: le siguen los mensajes de abajo. |
+| `conexión tardía de D-ID: …; se deja que D-ID cuelgue` | D-ID abrió una conexión después del cambio. |
+| `D-ID conectó después del cambio (N s)` | D-ID terminó de conectar; debe colgar solo en unos segundos. |
+| `D-ID sigue conectado 5 s después de conectar; se le vuelve a pedir colgar` | Segunda petición. Con el embed ya desmontado no suele haber «End call» que pulsar (`no hay «End call» de D-ID que pulsar`). |
+| `D-ID colgó solo; quedó abierto N s después del cambio` | D-ID cerró todo. En la prueba real fueron de 9 a 12 s. Si no aparece, D-ID quedó abierto hasta que el alumno salga de la página: revisar si el embed cambió. |
+| `conexión tardía de D-ID cerrada: …` | Después de salir de la página (`pagehide`), D-ID abrió algo y se cerró. |
+| `salida de la página (pagehide)` | Cierre al salir. Le siguen el cierre forzado (el único momento en que la página corta conexiones de D-ID) y `ElevenLabs cerrado (salida de la página)` si había conversación. |
+
+Los logs muestran solo el host de cada conexión, nunca la URL: la de D-ID
+lleva la client key.
+
+### Qué no se puede garantizar
+
+- **Al quitar Rise el iframe** (cambio de lección), la página tiene solo el
+  evento `pagehide` y no puede esperar:
+  - La página pulsa «End call», pero el DELETE que envían los agentes
+    anteriores a V4 sale con un `fetch` del SDK de D-ID que muere con la
+    página: en las pruebas simuladas no llegó en ninguno de 4 desmontajes,
+    y con D-ID real el navegador lo canceló. La salida de la sala de los
+    agentes de LiveKit va por su WebSocket: llegó en 3 de 4 desmontajes
+    simulados y con D-ID real no se pudo observar.
+  - El navegador sí corta las conexiones de inmediato. D-ID libera la
+    sesión según su propio tiempo de expiración, que no controlamos.
+  - Lo mismo aplica con el puente de las direcciones anteriores: es un
+    nivel más de iframe y se comporta igual.
+- **El DELETE de D-ID falla** en los agentes talk (embed 2.2.12): aun con
+  «End call» y la página abierta, D-ID responde 400 «missing or invalid
+  session_id» (prueba real del 2026-11-22, 2 de 2). Esas sesiones se
+  liberan por expiración de D-ID. Es un error del embed; hay que
+  reportarlo a D-ID.
+- **Tras el cambio a ElevenLabs**, D-ID puede quedar abierto unos segundos
+  mientras termina de conectar y cuelga (de 9 a 12 s en la prueba real
+  del 2026-11-23, sin reintentos). Si no colgara, sigue abierto hasta que
+  el alumno sale de la página: el embed no ofrece otro camino para
+  colgar.
+- **Si D-ID cambia** sus dominios o la forma en que el embed se desmonta,
+  el cierre forzado puede dejar de reconocer sus conexiones. Los logs de
+  arriba lo muestran.
+- **Rise**: lo que hace al cambiar de lección no se puede modificar.
 
 ## Tareas periódicas
 

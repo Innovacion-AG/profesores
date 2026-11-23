@@ -181,10 +181,13 @@ Si D-ID no opera, la página cambia sola:
 | Sin créditos de video (pasa a solo-texto) | Cambia a ElevenLabs | Se queda el chat de texto de D-ID |
 | No carga, se queda en «Cargando…», no conecta, falla la conexión, o la sala de espera / «Alta demanda» dura más de 20 s | Cambia a ElevenLabs | Aviso «El profesor no está disponible por el momento» con botón **Intentar de nuevo** |
 
-Al cambiar, la sesión de D-ID se cierra. Si el alumno ya había tocado la
+Al cambiar, primero se cuelga D-ID y después aparece ElevenLabs o el aviso,
+para que no queden dos sesiones abiertas. Si D-ID todavía estaba
+conectando, se le apaga el micrófono y cuelga solo unos segundos después. Si el alumno acaba de tocar la
 página, la conversación de ElevenLabs arranca sola; si no, la inicia él. La
 sesión (D-ID o ElevenLabs) también se cierra al salir de la página y con el
-botón **✕ Terminar**, para liberar las sesiones del plan.
+botón **✕ Terminar**, para liberar las sesiones del plan. Detalles y qué no
+se puede garantizar: [operación › Cierre de sesiones](docs/operacion.md#cierre-de-sesiones).
 
 Para revisar algo, abre la consola del navegador (Cmd+Option+J en Chrome):
 los mensajes de la página empiezan con `[agente]`. `__textosPendientes()`

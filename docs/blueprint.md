@@ -84,13 +84,23 @@ sequenceDiagram
   alt D-ID opera
     DID-->>Alumno: conversación por video, voz o texto
   else sin créditos, sin sesiones libres, no carga o no conecta
-    Pagina->>DID: cierra la sesión
-    Pagina->>EL: carga el widget con elevenlabs_agent_id
+    Pagina->>DID: cuelga («End call» o quita su contenedor) y espera hasta 3 s
+    Pagina->>EL: ya colgado D-ID, carga el widget con elevenlabs_agent_id
     EL-->>Alumno: conversación por voz
   end
-  Alumno->>Pagina: sale de la página o pulsa «✕ Terminar»
-  Pagina->>DID: cierra la sesión para liberar el plan
+  Alumno->>Pagina: sale de la página (pagehide) o pulsa «✕ Terminar»
+  Pagina->>DID: pulsa «End call» y cierra sus conexiones
+  Pagina->>EL: cierra la conversación
 ```
+
+La página registra cada conexión y micrófono que se abre (script inicial
+de `src/plantilla.html`) para reconocer las de D-ID, por su destino o
+porque las creó el código del embed. Tras el cambio a ElevenLabs solo se
+apaga el micrófono de D-ID y se espera a que cuelgue: cortarle la
+conexión lo hace reintentar con otra sesión. A la fuerza solo se cierran
+al salir de la página. El embed de D-ID no expone una función para
+colgar. Detalle y límites en [operación › Cierre de sesiones](operacion.md#cierre-de-sesiones)
+y en la [decisión 0007](decisiones/0007-se-cuelga-d-id-antes-del-respaldo-y-al-salir-sin-campo-tipo.md).
 
 Si el agente no tiene `elevenlabs_agent_id` (13 de 53), la página muestra
 el chat de texto de D-ID o el aviso «El profesor no está disponible por el
