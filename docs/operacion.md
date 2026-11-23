@@ -82,7 +82,7 @@ llegar a las páginas de los cursos:
 | --- | --- | --- |
 | Publicación en rojo | Actions › Publicar; GitHub puede avisar por correo a quien lanzó la ejecución, según su configuración de notificaciones | Leer el error en el resumen de la ejecución y corregir `agentes.json`. |
 | Agentes en respaldo de ElevenLabs o con aviso «no disponible» | Consola del navegador, mensajes con prefijo `[agente]` | Revisar créditos y sesiones de D-ID en el tablero de la cuenta «Proyectos Innovación». |
-| `cierre forzado de D-ID (tope …)` frecuente, o conexiones de D-ID sin la marca «(D-ID)» | Consola del navegador, mensajes `[agente]` (ver [Cierre de sesiones](#cierre-de-sesiones)) | Revisar si el embed de D-ID cambió y ajustar `DOMINIOS_DID` o `colgarDID()` en `src/agente.js` por PR. |
+| Cambios a ElevenLabs sin `D-ID colgó solo` después, o conexiones de D-ID sin la marca «(D-ID)» | Consola del navegador, mensajes `[agente]` (ver [Cierre de sesiones](#cierre-de-sesiones)) | Revisar si el embed de D-ID cambió y ajustar `DOMINIOS_DID` o `colgarDID()` en `src/agente.js` por PR. |
 | «Alta demanda» o sala de espera frecuente | Reportes de DEA o de alumnos | Revisar las sesiones simultáneas del plan de D-ID. |
 | Una URL antigua no carga | Abrir `https://erikv-ag.github.io/profesores/<id>.html` | Revisar que `ErikV-AG/profesores` exista y tenga GitHub Pages activo. |
 
@@ -96,8 +96,8 @@ estos casos (decisión 0007):
 
 | Momento | Qué hace la página |
 | --- | --- |
-| D-ID no opera y se cambia a ElevenLabs o al aviso | Cuelga D-ID primero: pulsa «End call» si está a la vista, quita el contenedor de D-ID (el embed se desmonta y cuelga solo) y espera hasta 3 s. Lo que siga abierto lo cierra a la fuerza. Después monta ElevenLabs o el aviso. |
-| D-ID conecta después del cambio | Cierra esa conexión en cuanto aparece, sin tocar las de ElevenLabs. |
+| D-ID no opera y se cambia a ElevenLabs o al aviso | Cuelga D-ID primero: pulsa «End call» si está a la vista, quita el contenedor de D-ID (el embed se desmonta y cuelga solo) y espera hasta 3 s. Si sigue abierto, apaga su micrófono y deja que cuelgue solo. Después monta ElevenLabs o el aviso. |
+| D-ID termina de conectar después del cambio | No le corta la conexión: D-ID reintentaría con una sesión nueva. Apaga su micrófono y espera a que cuelgue solo; si a los 5 s de conectar sigue conectado, le vuelve a pedir colgar. No toca ElevenLabs. |
 | «✕ Terminar» sin «End call» a la vista, o «Intentar de nuevo» | Cuelga D-ID y, ya colgado, recarga. |
 | El alumno sale (cambia de lección, cierra la pestaña, recarga, va atrás) | En `pagehide`: pulsa «End call», cierra lo de D-ID y cierra ElevenLabs. |
 
@@ -119,9 +119,13 @@ si no, queda listo y el alumno pulsa «Iniciar conversación».
 | `colgando D-ID (motivo); conexión: …` | Empieza el cierre previo al respaldo. |
 | `se pulsó «End call» de D-ID` | Se usó el cierre propio de D-ID: los agentes anteriores a V4 envían el DELETE (que hoy responde 400; ver abajo). |
 | `D-ID colgado en N ms` | D-ID cerró todo dentro del tope. Es lo esperado. |
-| `cierre forzado de D-ID (tope de 3 s): …` | D-ID no cerró a tiempo y la página cerró lo que quedaba. Si se repite, revisar si el embed cambió. |
-| `conexión tardía de D-ID cerrada: …` o `D-ID avisó «connected» después de colgar` | D-ID conectó después del cambio y se cerró. |
-| `salida de la página (pagehide)` | Cierre al salir. Le siguen el cierre forzado y `ElevenLabs cerrado (salida de la página)` si había conversación. |
+| `D-ID sigue abierto a los 3 s (…); se deja que cuelgue solo` | D-ID seguía conectando al cambiar. Es normal: le siguen los mensajes de abajo. |
+| `conexión tardía de D-ID: …; se deja que D-ID cuelgue` | D-ID abrió una conexión después del cambio. |
+| `D-ID conectó después del cambio (N s)` | D-ID terminó de conectar; debe colgar solo en unos segundos. |
+| `D-ID sigue conectado 5 s después de conectar; se le vuelve a pedir colgar` | Segunda petición. Con el embed ya desmontado no suele haber «End call» que pulsar (`no hay «End call» de D-ID que pulsar`). |
+| `D-ID colgó solo; quedó abierto N s después del cambio` | D-ID cerró todo. En la prueba real fueron de 9 a 12 s. Si no aparece, D-ID quedó abierto hasta que el alumno salga de la página: revisar si el embed cambió. |
+| `conexión tardía de D-ID cerrada: …` | Después de salir de la página (`pagehide`), D-ID abrió algo y se cerró. |
+| `salida de la página (pagehide)` | Cierre al salir. Le siguen el cierre forzado (el único momento en que la página corta conexiones de D-ID) y `ElevenLabs cerrado (salida de la página)` si había conversación. |
 
 Los logs muestran solo el host de cada conexión, nunca la URL: la de D-ID
 lleva la client key.
@@ -145,6 +149,11 @@ lleva la client key.
   session_id» (prueba real del 2026-11-22, 2 de 2). Esas sesiones se
   liberan por expiración de D-ID. Es un error del embed; hay que
   reportarlo a D-ID.
+- **Tras el cambio a ElevenLabs**, D-ID puede quedar abierto unos segundos
+  mientras termina de conectar y cuelga (de 9 a 12 s en la prueba real
+  del 2026-11-23, sin reintentos). Si no colgara, sigue abierto hasta que
+  el alumno sale de la página: el embed no ofrece otro camino para
+  colgar.
 - **Si D-ID cambia** sus dominios o la forma en que el embed se desmonta,
   el cierre forzado puede dejar de reconocer sus conexiones. Los logs de
   arriba lo muestran.

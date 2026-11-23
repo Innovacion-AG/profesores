@@ -40,7 +40,17 @@ de 54 entradas, 50 son `talk` y 2 son `image`. Las otras 2 respondieron
   1. pulsa «End call» si está a la vista;
   2. quita el contenedor de D-ID para que el embed se desmonte y cuelgue;
   3. espera hasta 3 s;
-  4. fuerza el cierre de lo que quede.
+  4. si sigue abierto, apaga el micrófono de D-ID y deja que cuelgue
+     solo, sin cortarle la conexión (ver abajo).
+- Con la página abierta, a D-ID nunca se le cortan las conexiones:
+  - Si se le pide colgar mientras conecta (desmontaje o «End call»), el
+    SDK termina de conectar y cuelga solo.
+  - Si se le corta la conexión, la da por fallida y reintenta con una
+    sesión nueva: hasta 3 intentos de 45 s. En la prueba real, un corte
+    produjo una segunda sesión a los 46 s.
+  - Si llega a conectar después del cambio y a los 5 s sigue conectado, se
+    le vuelve a pedir colgar con «End call».
+  - El cierre forzado de conexiones queda solo para `pagehide`.
 - Un registro en `src/plantilla.html` anota cada `RTCPeerConnection`,
   `WebSocket` y pista de `getUserMedia`:
   - Solo registra: la llamada original no cambia, y si registrar falla se
@@ -54,7 +64,8 @@ de 54 entradas, 50 son `talk` y 2 son `image`. Las otras 2 respondieron
     dictado va a `*.stt.speech.microsoft.com`.
   - Una pista de micrófono es de D-ID si la pidió el código de D-ID o si
     se pidió antes del cambio.
-- Después del cambio se cierra cualquier conexión de D-ID que llegue tarde.
+- Después del cambio, a una conexión de D-ID que llega tarde se le apaga
+  el micrófono y se espera a que D-ID cuelgue.
 - En `pagehide` se pulsa «End call», se cierran las conexiones y el
   micrófono de D-ID y se cierra ElevenLabs. Todo es síncrono. No se cuelga
   en `visibilitychange`, para no cortar a quien solo cambia de pestaña.
@@ -68,6 +79,9 @@ de 54 entradas, 50 son `talk` y 2 son `image`. Las otras 2 respondieron
 ## Consecuencias
 - El cambio a ElevenLabs tarda hasta 3 s más mientras D-ID cuelga; el
   cargador muestra «Cambiando a modo de voz…».
+- Si D-ID seguía conectando al cambiar, queda abierto, sin micrófono,
+  hasta que termina de conectar y cuelga: de 9 a 12 s en la prueba real.
+  Es preferible a cortarlo, porque cortarlo abría otra sesión.
 - El alumno que espera la sala de espera o el tiempo límite tendrá que
   pulsar «Iniciar conversación» en ElevenLabs: su toque ya no es reciente.
 - Al quitar Rise el iframe no se puede garantizar el DELETE de los
@@ -87,6 +101,16 @@ de 54 entradas, 50 son `talk` y 2 son `image`. Las otras 2 respondieron
   ElevenLabs simulados, página padre como Rise y el puente
   `ErikV-AG/profesores` con su código real. Los resultados están en la
   descripción del PR.
+- Conexión tardía con el ajuste (2026-11-23, 4 sesiones autorizadas, 2 por
+  tipo, 75 s de observación cada una). D-ID colgó solo en las 4 y no
+  hubo reintentos; ElevenLabs siguió hablando:
+  - talk: conectó 8.8 y 9.3 s después del cambio, colgó 2.6 s después de
+    conectar y quedó abierto 11.5 y 12.0 s en total. Su DELETE respondió
+    400.
+  - image (LiveKit): conectó 2.8 y 2.6 s después del cambio y quedó
+    abierto 9.0 y 10.3 s en total. A los 5 s de conectar seguía conectado,
+    pero la segunda petición no encontró «End call»: el embed ya
+    desmontado no deja botones. Colgó solo 0.8 y 2.5 s después.
 - Prueba con D-ID real en `prueba/iframes.html` (2026-11-22, 10 sesiones
   autorizadas): hosts reales, conexión normal y «✕ Terminar», cambio a
   ElevenLabs con D-ID conectando y desmontaje en 1 y 2 niveles. Resultados

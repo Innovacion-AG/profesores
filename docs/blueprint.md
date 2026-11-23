@@ -94,8 +94,11 @@ sequenceDiagram
 ```
 
 La página registra cada conexión y micrófono que se abre (script inicial
-de `src/plantilla.html`) para cerrar a la fuerza solo las de D-ID,
-reconocidas por su destino o porque las creó el código del embed. El embed de D-ID no expone una función para
+de `src/plantilla.html`) para reconocer las de D-ID, por su destino o
+porque las creó el código del embed. Tras el cambio a ElevenLabs solo se
+apaga el micrófono de D-ID y se espera a que cuelgue: cortarle la
+conexión lo hace reintentar con otra sesión. A la fuerza solo se cierran
+al salir de la página. El embed de D-ID no expone una función para
 colgar. Detalle y límites en [operación › Cierre de sesiones](operacion.md#cierre-de-sesiones)
 y en la [decisión 0007](decisiones/0007-se-cuelga-d-id-antes-del-respaldo-y-al-salir-sin-campo-tipo.md).
 

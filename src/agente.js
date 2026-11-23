@@ -86,6 +86,10 @@
     // se desmonta y cuelga; si en este plazo no terminó, se fuerza.
     const TOPE_COLGAR_MS = 3000;
 
+    // Después del cambio, si D-ID igual termina de conectar y a los 5 s
+    // sigue conectado, se le vuelve a pedir colgar (ver vigilarDIDTrasCambio).
+    const ESPERA_RECOLGAR_MS = 5000;
+
     // Sin navigator.userActivation: cuánto dura un toque como «reciente».
     const GESTO_RECIENTE_MS = 5000;
 
@@ -851,13 +855,17 @@
             console.log(LOG, 'conexión:', estado);
             estadoDID = estado;
 
-            // D-ID ya se colgó (cambio de agente o salida) y aun así conecta:
-            // se cierra lo que abrió. Las conexiones nuevas también las cierra
-            // el registro (registro.alRegistrar), por su destino.
+            // D-ID sigue conectando después del cambio: no se le corta (su
+            // SDK reintentaría con una sesión nueva). Ya se le pidió colgar
+            // al cambiar; se apaga su micrófono y se vigila (ver
+            // vigilarDIDTrasCambio). Al salir, se cierra todo.
             if (yaCambio || cerrada) {
-                if (estado === 'connecting' || estado === 'connected') {
-                    console.warn(LOG, 'D-ID avisó «' + estado + '» después de colgar; se cierra lo que abrió');
-                    forzarCierreDID('conexión tardía');
+                if (cerrada && (estado === 'connecting' || estado === 'connected')) {
+                    forzarCierreDID('conexión tardía al salir');
+                } else if (estado === 'connecting' || estado === 'connected') {
+                    console.warn(LOG, 'D-ID avisó «' + estado + '» después del cambio; se espera a que cuelgue');
+                    apagarMicrofonoDID();
+                    vigilarDIDTrasCambio();
                 }
                 return;
             }
@@ -1088,15 +1096,23 @@
        2 s). Al colgar, los agentes anteriores a V4 envían DELETE a D-ID
        solo si ya estaban conectados; los de LiveKit salen de la sala.
 
-       Por eso colgarDID():
+       Si se le pide colgar mientras conecta, el SDK termina de conectar y
+       cuelga solo. Si en cambio se le corta la conexión, la da por fallida
+       y reintenta con una sesión nueva (hasta 3 intentos de 45 s): por eso,
+       con la página abierta, a D-ID nunca se le cortan las conexiones.
+
+       colgarDID():
          1. pulsa «End call» si está a la vista;
-         2. quita el contenedor de D-ID para que el embed se desmonte;
+         2. quita el contenedor de D-ID para que el embed se desmonte (el
+            desmontaje le pide colgar);
          3. espera a que se cierre lo de D-ID, con tope TOPE_COLGAR_MS;
-         4. fuerza lo que quede: cierra las conexiones de D-ID (por su
-            destino o porque las creó su código, ver DOMINIOS_DID) y apaga
-            su micrófono.
-       El registro (src/plantilla.html) anota cada conexión y pista; aquí
-       solo se cierran las de D-ID.
+         4. si sigue abierto, apaga su micrófono y deja que cuelgue solo:
+            vigilarDIDTrasCambio() le vuelve a pedir colgar si a los
+            ESPERA_RECOLGAR_MS de conectar sigue conectado.
+       El cierre forzado (forzarCierreDID: cierra las conexiones de D-ID,
+       por su destino o porque las creó su código, ver DOMINIOS_DID) queda
+       solo para la salida de la página. El registro (src/plantilla.html)
+       anota cada conexión y pista; aquí solo se tocan las de D-ID.
 
        Al quitar Rise el iframe solo llega pagehide (no beforeunload ni
        unload) y no hay tiempo de esperar: se hace todo de forma síncrona.
@@ -1152,9 +1168,10 @@
         return lista.map(e => (e.tipo === 'pista' ? 'micrófono' : e.tipo + ' ' + (e.hosts.join(',') || 'sin host'))).join('; ');
     }
 
-    // Conexiones que se abren después del cambio o de la salida: si son de
-    // D-ID se cierran en cuanto quien las creó termina de configurarlas.
-    // Las de ElevenLabs (u otras) no se tocan.
+    // Conexiones de D-ID que se abren después del cambio: no se cortan
+    // (D-ID reintentaría); se apaga su micrófono y se vigila que cuelgue.
+    // Después de la salida, sí se cierran. Las de ElevenLabs (u otras) no
+    // se tocan.
     registro.alRegistrar = entrada => {
         if (entrada.tipo !== 'pista') {
             console.log(LOG, 'conexión abierta: ' + describir([entrada]) + (esDeDID(entrada) ? ' (D-ID)' : ''));
@@ -1162,16 +1179,30 @@
         if (!(instanteCambio || cerrada) || !esDeDID(entrada)) return;
         setTimeout(() => {
             if (!abierta(entrada)) return;
-            cerrarEntrada(entrada);
-            console.warn(LOG, 'conexión tardía de D-ID cerrada: ' + describir([entrada]));
+            if (cerrada || entrada.tipo === 'pista') {
+                cerrarEntrada(entrada);
+                console.warn(LOG, (entrada.tipo === 'pista' ? 'micrófono de D-ID apagado (llegó tarde)' : 'conexión tardía de D-ID cerrada: ' + describir([entrada])));
+            } else {
+                console.warn(LOG, 'conexión tardía de D-ID: ' + describir([entrada]) + '; se deja que D-ID cuelgue');
+                vigilarDIDTrasCambio();
+            }
         }, 0);
     };
 
     // Al salir no se exige que se vea: cuando Rise quita el iframe, la
     // página ya no tiene tamaño y esVisible() da falso aunque el botón esté.
     function pulsarFinDID(exigirVisible = true) {
-        if (!contenedorDID.isConnected) return false;
-        const fin = buscarEnDID(el => esBotonFin(el) && (!exigirVisible || esVisible(el)));
+        if (!contenedorDID.isConnected && exigirVisible) return false;
+        const criterio = el => esBotonFin(el) && (!exigirVisible || esVisible(el));
+        let fin = buscarEnDID(criterio);
+        // Ya quitado de la página: se busca en su propio shadow DOM.
+        if (!fin && !contenedorDID.isConnected) {
+            for (const raiz of recolectar(contenedorDID, [])) {
+                if (!raiz.querySelectorAll) continue;
+                fin = [...raiz.querySelectorAll('button, [role="button"], a')].find(criterio);
+                if (fin) break;
+            }
+        }
         if (!fin) return false;
         try { fin.click(); } catch (e) { return false; }
         console.log(LOG, 'se pulsó «End call» de D-ID');
@@ -1193,6 +1224,57 @@
         }
         if (lista.length) console.log(LOG, 'cierre forzado de D-ID (' + motivo + '): ' + describir(lista));
         return lista.length;
+    }
+
+    function apagarMicrofonoDID() {
+        const pistas = abiertasDe(e => e.tipo === 'pista' && esDeDID(e));
+        pistas.forEach(cerrarEntrada);
+        if (pistas.length) console.log(LOG, 'micrófono de D-ID apagado');
+    }
+
+    // Pedirle a D-ID que cuelgue por su propio camino: «End call» (aunque
+    // el contenedor ya no esté en la página). Quitar el contenedor ya se
+    // lo pidió al desmontarse.
+    function pedirColgarDID() {
+        if (pulsarFinDID(false)) return;
+        console.log(LOG, 'no hay «End call» de D-ID que pulsar; se espera a que su desmontaje cuelgue');
+    }
+
+    function pcsDIDAbiertas() { return abiertasDe(e => e.tipo !== 'pista' && esDeDID(e)); }
+    function pcConectada() {
+        return pcsDIDAbiertas().some(e => {
+            try { return e.tipo === 'pc' && e.obj.connectionState === 'connected'; } catch (x) { return false; }
+        });
+    }
+
+    // Después del cambio, mientras D-ID tenga algo abierto: si conecta y a
+    // los ESPERA_RECOLGAR_MS sigue conectado, se le vuelve a pedir colgar.
+    // Registra cuánto quedó abierto D-ID después del cambio.
+    let vigilando = 0;
+    function vigilarDIDTrasCambio() {
+        if (vigilando || cerrada) return;
+        let desdeConectado = 0, repetido = false;
+        vigilando = setInterval(() => {
+            if (cerrada) { clearInterval(vigilando); return; }
+            if (!pcsDIDAbiertas().length) {
+                clearInterval(vigilando);
+                vigilando = 0;
+                console.log(LOG, 'D-ID colgó solo; quedó abierto ' +
+                    ((Date.now() - instanteCambio) / 1000).toFixed(1) + ' s después del cambio');
+                return;
+            }
+            apagarMicrofonoDID();
+            if (!pcConectada()) { desdeConectado = 0; return; }
+            if (!desdeConectado) {
+                desdeConectado = Date.now();
+                console.log(LOG, 'D-ID conectó después del cambio (' +
+                    ((desdeConectado - instanteCambio) / 1000).toFixed(1) + ' s); se espera a que cuelgue');
+            } else if (!repetido && Date.now() - desdeConectado > ESPERA_RECOLGAR_MS) {
+                repetido = true;
+                console.warn(LOG, 'D-ID sigue conectado ' + ESPERA_RECOLGAR_MS / 1000 + ' s después de conectar; se le vuelve a pedir colgar');
+                pedirColgarDID();
+            }
+        }, 250);
     }
 
     let colgando = null;
@@ -1222,7 +1304,12 @@
                 if (!listo && Date.now() - inicio < TOPE_COLGAR_MS) return;
                 clearInterval(id);
                 if (listo) console.log(LOG, 'D-ID colgado en ' + (Date.now() - inicio) + ' ms');
-                else forzarCierreDID('tope de ' + TOPE_COLGAR_MS / 1000 + ' s');
+                else {
+                    apagarMicrofonoDID();
+                    console.warn(LOG, 'D-ID sigue abierto a los ' + TOPE_COLGAR_MS / 1000 + ' s (' + estadoDID + '; ' +
+                        describir(abiertasDe(esDeDID)) + '); se deja que cuelgue solo');
+                    vigilarDIDTrasCambio();
+                }
                 resolver();
             }, 100);
         });
