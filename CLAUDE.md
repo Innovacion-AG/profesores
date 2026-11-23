@@ -74,6 +74,7 @@ haría perder el permiso de micrófono, que solo vale para el origen del `src`.
 - Metadatos del catálogo: catalog-info.yaml
 - Arquitectura y dependencias: docs/blueprint.md
 - Operación y despliegue: docs/operacion.md
+- Manual de alta de agentes (de la Cédula a la entrega a DEA): docs/alta-de-agente.md
 - Decisiones: docs/decisiones/
 - Conversación del proyecto: #proj-profesores en Slack
 - Responsable @CoriaAlx, suplente @rodrig317-cpu, supervisor y revisor
