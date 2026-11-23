@@ -95,7 +95,7 @@ sequenceDiagram
 
 La página registra cada conexión y micrófono que se abre (script inicial
 de `src/plantilla.html`) para cerrar a la fuerza solo las de D-ID,
-reconocidas por su destino. El embed de D-ID no expone una función para
+reconocidas por su destino o porque las creó el código del embed. El embed de D-ID no expone una función para
 colgar. Detalle y límites en [operación › Cierre de sesiones](operacion.md#cierre-de-sesiones)
 y en la [decisión 0007](decisiones/0007-se-cuelga-d-id-antes-del-respaldo-y-al-salir-sin-campo-tipo.md).
 

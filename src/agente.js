@@ -93,7 +93,13 @@
        (*.d-id.com) y LiveKit Cloud, que usan los agentes de tipo image y
        expressive (la URL de la sala la entrega D-ID al conectar).
        ElevenLabs tiene su propio LiveKit (livekit.rtc.elevenlabs.io) y su
-       API: lo que va a elevenlabs.io nunca se trata como D-ID. */
+       API: lo que va a elevenlabs.io nunca se trata como D-ID.
+       El destino no basta (prueba con D-ID real, noviembre de 2026): el
+       video de los agentes talk va por el TURN de Cloudflare
+       (turn.cloudflare.com, compartido con otros servicios), el de LiveKit
+       se crea sin servidores ICE y el dictado va a *.stt.speech.microsoft.com.
+       Esas conexiones se reconocen porque las crea código cargado desde
+       agent.d-id.com (marca deDID del registro de src/plantilla.html). */
     const DOMINIOS_DID = ['d-id.com', 'livekit.cloud', 'livekit.run'];
     const DOMINIOS_ELEVENLABS = ['elevenlabs.io'];
 
@@ -1087,7 +1093,8 @@
          2. quita el contenedor de D-ID para que el embed se desmonte;
          3. espera a que se cierre lo de D-ID, con tope TOPE_COLGAR_MS;
          4. fuerza lo que quede: cierra las conexiones de D-ID (por su
-            destino, ver DOMINIOS_DID) y apaga su micrófono.
+            destino o porque las creó su código, ver DOMINIOS_DID) y apaga
+            su micrófono.
        El registro (src/plantilla.html) anota cada conexión y pista; aquí
        solo se cierran las de D-ID.
 
@@ -1106,13 +1113,14 @@
         return dominios.some(d => host === d || host.endsWith('.' + d));
     }
 
-    // Una conexión es de D-ID por su destino. El micrófono no tiene
-    // destino: es de D-ID si lo pidió el código de D-ID o si se pidió
-    // antes del cambio, cuando ElevenLabs todavía no existía.
+    // Una conexión es de D-ID por su destino o porque la creó el código de
+    // D-ID; lo que va a ElevenLabs nunca. El micrófono no tiene destino: es
+    // de D-ID si lo pidió el código de D-ID o si se pidió antes del cambio,
+    // cuando ElevenLabs todavía no existía.
     function esDeDID(entrada) {
         if (entrada.tipo === 'pista') return entrada.deDID || !instanteCambio || entrada.t < instanteCambio;
         if (entrada.hosts.some(h => enDominios(h, DOMINIOS_ELEVENLABS))) return false;
-        return entrada.hosts.some(h => enDominios(h, DOMINIOS_DID));
+        return entrada.deDID || entrada.hosts.some(h => enDominios(h, DOMINIOS_DID));
     }
     function esDeElevenLabs(entrada) {
         if (entrada.tipo === 'pista') return !esDeDID(entrada);

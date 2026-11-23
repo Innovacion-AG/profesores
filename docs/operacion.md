@@ -101,9 +101,12 @@ estos casos (decisión 0007):
 | «✕ Terminar» sin «End call» a la vista, o «Intentar de nuevo» | Cuelga D-ID y, ya colgado, recarga. |
 | El alumno sale (cambia de lección, cierra la pestaña, recarga, va atrás) | En `pagehide`: pulsa «End call», cierra lo de D-ID y cierra ElevenLabs. |
 
-Una conexión cuenta como de D-ID por su destino: `*.d-id.com` o LiveKit
-Cloud (`*.livekit.cloud`, `*.livekit.run`). Lo que va a `*.elevenlabs.io`
-nunca se cierra como D-ID.
+Una conexión cuenta como de D-ID si va a `*.d-id.com` o a LiveKit Cloud
+(`*.livekit.cloud`, `*.livekit.run`), o si la creó el código del embed
+(`agent.d-id.com`). Lo segundo cubre el video de los agentes talk, que va
+por el TURN de Cloudflare; la conexión de LiveKit, que se crea sin
+servidores, y el dictado (`*.stt.speech.microsoft.com`). Lo que va a
+`*.elevenlabs.io` nunca se cierra como D-ID.
 
 ElevenLabs arranca solo únicamente si el alumno acaba de tocar la página;
 si no, queda listo y el alumno pulsa «Iniciar conversación».
@@ -112,9 +115,9 @@ si no, queda listo y el alumno pulsa «Iniciar conversación».
 
 | Mensaje | Qué significa |
 | --- | --- |
-| `conexión abierta: ws … (D-ID)` / `pc … (D-ID)` | Conexión registrada y reconocida como de D-ID. Sin «(D-ID)», la página no la cerrará. Si D-ID usa un dominio nuevo, aparece aquí sin la marca: hay que agregarlo a `DOMINIOS_DID` en `src/agente.js`. |
+| `conexión abierta: ws … (D-ID)` / `pc … (D-ID)` | Conexión registrada y reconocida como de D-ID. Sin «(D-ID)», la página no la cerrará. Si una conexión de D-ID aparece sin la marca, hay que agregar su dominio a `DOMINIOS_DID` en `src/agente.js`. |
 | `colgando D-ID (motivo); conexión: …` | Empieza el cierre previo al respaldo. |
-| `se pulsó «End call» de D-ID` | Se usó el cierre propio de D-ID: los agentes anteriores a V4 envían el DELETE. |
+| `se pulsó «End call» de D-ID` | Se usó el cierre propio de D-ID: los agentes anteriores a V4 envían el DELETE (que hoy responde 400; ver abajo). |
 | `D-ID colgado en N ms` | D-ID cerró todo dentro del tope. Es lo esperado. |
 | `cierre forzado de D-ID (tope de 3 s): …` | D-ID no cerró a tiempo y la página cerró lo que quedaba. Si se repite, revisar si el embed cambió. |
 | `conexión tardía de D-ID cerrada: …` o `D-ID avisó «connected» después de colgar` | D-ID conectó después del cambio y se cerró. |
@@ -129,13 +132,19 @@ lleva la client key.
   evento `pagehide` y no puede esperar:
   - La página pulsa «End call», pero el DELETE que envían los agentes
     anteriores a V4 sale con un `fetch` del SDK de D-ID que muere con la
-    página: en las pruebas simuladas no llegó en ninguno de 4 desmontajes.
-    La salida de la sala de los agentes de LiveKit va por su WebSocket y
-    llegó en 3 de 4.
+    página: en las pruebas simuladas no llegó en ninguno de 4 desmontajes,
+    y con D-ID real el navegador lo canceló. La salida de la sala de los
+    agentes de LiveKit va por su WebSocket: llegó en 3 de 4 desmontajes
+    simulados y con D-ID real no se pudo observar.
   - El navegador sí corta las conexiones de inmediato. D-ID libera la
     sesión según su propio tiempo de expiración, que no controlamos.
   - Lo mismo aplica con el puente de las direcciones anteriores: es un
     nivel más de iframe y se comporta igual.
+- **El DELETE de D-ID falla** en los agentes talk (embed 2.2.12): aun con
+  «End call» y la página abierta, D-ID responde 400 «missing or invalid
+  session_id» (prueba real del 2026-11-22, 2 de 2). Esas sesiones se
+  liberan por expiración de D-ID. Es un error del embed; hay que
+  reportarlo a D-ID.
 - **Si D-ID cambia** sus dominios o la forma en que el embed se desmonta,
   el cierre forzado puede dejar de reconocer sus conexiones. Los logs de
   arriba lo muestran.

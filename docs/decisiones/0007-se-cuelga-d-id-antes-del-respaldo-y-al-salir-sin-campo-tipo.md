@@ -45,9 +45,13 @@ de 54 entradas, 50 son `talk` y 2 son `image`. Las otras 2 respondieron
   `WebSocket` y pista de `getUserMedia`:
   - Solo registra: la llamada original no cambia, y si registrar falla se
     ignora.
-  - Una conexión es de D-ID por su destino: `*.d-id.com` o LiveKit Cloud
-    (`*.livekit.cloud`, `*.livekit.run`). Lo que va a `*.elevenlabs.io`
-    nunca se toca.
+  - Una conexión es de D-ID si va a `*.d-id.com` o a LiveKit Cloud
+    (`*.livekit.cloud`, `*.livekit.run`), o si la creó el código del embed
+    (`agent.d-id.com`). Lo que va a `*.elevenlabs.io` nunca se toca.
+  - El destino solo no basta (prueba real del 2026-11-22): el video de los
+    agentes talk va por el TURN de Cloudflare, compartido con otros
+    servicios; la conexión de LiveKit se crea sin servidores ICE; y el
+    dictado va a `*.stt.speech.microsoft.com`.
   - Una pista de micrófono es de D-ID si la pidió el código de D-ID o si
     se pidió antes del cambio.
 - Después del cambio se cierra cualquier conexión de D-ID que llegue tarde.
@@ -73,14 +77,20 @@ de 54 entradas, 50 son `talk` y 2 son `image`. Las otras 2 respondieron
 - Si D-ID cambia sus dominios o el embed deja de desmontarse al quitar el
   contenedor, hay que revisar `DOMINIOS_DID` y `colgarDID()`. Los logs
   `[agente] conexión abierta: …` muestran los hosts reales.
-- El dominio de LiveKit de D-ID se dedujo; falta confirmarlo con una prueba
-  real en `prueba/`.
+- El DELETE que envía el propio embed al pulsar «End call» responde 400
+  («missing or invalid session_id») en los agentes talk (embed 2.2.12):
+  aun con la página abierta, D-ID libera esas sesiones por expiración. Es
+  un error del embed que no se corrige desde la página.
 
 ## Evidencia
 - Banco de pruebas fuera del repositorio: Chrome 158 sin interfaz, D-ID y
   ElevenLabs simulados, página padre como Rise y el puente
   `ErikV-AG/profesores` con su código real. Los resultados están en la
   descripción del PR.
+- Prueba con D-ID real en `prueba/iframes.html` (2026-11-22, 10 sesiones
+  autorizadas): hosts reales, conexión normal y «✕ Terminar», cambio a
+  ElevenLabs con D-ID conectando y desmontaje en 1 y 2 niveles. Resultados
+  en el PR.
 - `@d-id/client-sdk` 3.0.9: `webrtc-manager.ts` (`disconnect`) y
   `livekit-manager.ts` (`disconnect`).
 - Embed `agent.d-id.com/2.2.12`: `DID_AGENTS_API`, el `beforeunload` y el
