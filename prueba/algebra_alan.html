@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Página generada por scripts/construir.py desde src/plantilla.html.
+       No se edita a mano: los datos del agente están en agentes.json. -->
+  <title>Alan Turing · Álgebra</title>
+
+  <!-- Debe ir como script clásico (no module) ANTES de todo lo que pueda
+       crear shadow DOMs.
+
+       1. Seguro contra shadow DOM cerrado: el embed v2 de D-ID abre sus
+          shadow roots, pero si alguna versión los cerrara, la traducción
+          dejaría de alcanzarlos. Forzar mode:'open' no cuesta nada y no
+          altera el widget.
+       2. Relleno de video en pantallas anchas: el video del avatar tiene
+          la proporción de la imagen original (~16:9). En pantallas
+          horizontales más anchas que eso (como el iframe de 350 px de alto
+          en Rise), el video cubre todo el ancho y recorta un poco arriba y
+          abajo, protegiendo la cabeza. En celulares y pantallas verticales
+          no se toca nada. Para desactivarlo: RELLENAR_ANCHO = false.
+       3. Registro de conexiones y micrófono: anota cada RTCPeerConnection,
+          WebSocket y pista de getUserMedia que se abre en la página, para
+          que agente.js pueda colgar las de D-ID (ver colgarDID()). Solo
+          registra: la llamada original se hace igual y devuelve lo mismo;
+          si algo falla al registrar, se ignora. De cada conexión se guarda
+          solo el host, nunca la URL completa (la de D-ID lleva la client
+          key). -->
+  <script>
+    (function () {
+      var RELLENAR_ANCHO = true;
+      var CSS_RELLENO =
+        '@media (orientation: landscape) and (min-aspect-ratio: 17/9) {' +
+        '  video { object-fit: cover !important; object-position: center 25% !important; }' +
+        '}';
+
+      var original = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function (init) {
+        var opciones = Object.assign({}, init, { mode: 'open' });
+        var raiz = original.call(this, opciones);
+        // El widget de ElevenLabs no tiene video: no se le inyecta nada.
+        if (RELLENAR_ANCHO && this.localName !== 'elevenlabs-convai') {
+          try {
+            var st = document.createElement('style');
+            st.textContent = CSS_RELLENO;
+            raiz.appendChild(st);
+          } catch (e) {}
+        }
+        return raiz;
+      };
+      // Por si el video no vive en un shadow DOM
+      if (RELLENAR_ANCHO) {
+        var st = document.createElement('style');
+        st.textContent = CSS_RELLENO;
+        document.head.appendChild(st);
+      }
+    })();
+
+    (function () {
+      var registro = window.__registroAgente = { pcs: [], sockets: [], pistas: [], alRegistrar: null };
+
+      function anotar(fn) { try { fn(); } catch (e) { /* registrar nunca rompe la llamada */ } }
+      function avisar(entrada) {
+        anotar(function () { if (typeof registro.alRegistrar === 'function') registro.alRegistrar(entrada); });
+      }
+      // ¿La llamada viene del código de D-ID? (para el micrófono, que no tiene destino)
+      function desdeDID() { return /agent\.d-id\.com/.test(String(new Error().stack || '')); }
+      function hostDe(url) {
+        // turn:host:3478?transport=udp, stun:host, wss://host/ruta?...
+        var m = /^[a-z]+:(?:\/\/)?(?:[^@\/?]*@)?(\[[^\]]+\]|[^:\/?#]+)/i.exec(String(url));
+        return m ? m[1].toLowerCase() : '';
+      }
+
+      if (window.RTCPeerConnection) anotar(function () {
+        var Original = window.RTCPeerConnection;
+        var Registrada = class RTCPeerConnection extends Original {
+          constructor() {
+            super(...arguments);
+            var pc = this, config = arguments[0];
+            anotar(function () {
+              var hosts = [];
+              ((config && config.iceServers) || []).forEach(function (s) {
+                [].concat(s.urls || s.url || []).forEach(function (u) { var h = hostDe(u); if (h) hosts.push(h); });
+              });
+              var entrada = { tipo: 'pc', obj: pc, hosts: hosts, t: Date.now(), deDID: desdeDID() };
+              registro.pcs.push(entrada);
+              avisar(entrada);
+            });
+          }
+        };
+        window.RTCPeerConnection = Registrada;
+      });
+
+      if (window.WebSocket) anotar(function () {
+        var Original = window.WebSocket;
+        var Registrado = class WebSocket extends Original {
+          constructor() {
+            super(...arguments);
+            var ws = this, url = arguments[0];
+            anotar(function () {
+              var entrada = { tipo: 'ws', obj: ws, hosts: [new URL(String(url), location.href).hostname.toLowerCase()], t: Date.now(), deDID: desdeDID() };
+              registro.sockets.push(entrada);
+              avisar(entrada);
+            });
+          }
+        };
+        window.WebSocket = Registrado;
+      });
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) anotar(function () {
+        var md = navigator.mediaDevices;
+        var original = md.getUserMedia;
+        md.getUserMedia = function () {
+          var t = Date.now(), deDID = false;
+          anotar(function () { deDID = desdeDID(); });
+          var promesa = original.apply(this || md, arguments);
+          anotar(function () {
+            promesa.then(function (stream) {
+              anotar(function () {
+                stream.getTracks().forEach(function (pista) {
+                  var entrada = { tipo: 'pista', obj: pista, hosts: [], t: t, deDID: deDID };
+                  registro.pistas.push(entrada);
+                  avisar(entrada);
+                });
+              });
+            }, function () { /* el error lo recibe quien llamó */ });
+          });
+          return promesa;
+        };
+      });
+    })();
+  </script>
+
+  <link rel="stylesheet" href="agente.css?v=a509b16217">
+
+  <!-- Configuración de este agente (generada desde agentes.json) -->
+  <script id="config-agente" type="application/json">{
+  "id": "algebra_alan",
+  "nombre": "Alan Turing · Álgebra",
+  "did_agent_id": "v2_agt_VRr-daUT",
+  "did_client_key": "ck_j4tRwGC0uPBeVPavOeiyA",
+  "elevenlabs_agent_id": ""
+}</script>
+</head>
+<body>
+
+  <div id="did-agent-container"></div>
+
+  <div id="elevenlabs-container" data-propio hidden></div>
+
+  <div id="cargador" data-propio role="status" aria-live="polite">
+    <span id="cargador-nombre">Alan Turing · Álgebra</span>
+    <div class="progreso" aria-hidden="true"></div>
+    <span id="cargador-texto">Conectando…</span>
+  </div>
+
+  <div id="aviso" data-propio role="alert" hidden>
+    <p class="aviso-titulo">El profesor no está disponible por el momento</p>
+    <p class="aviso-detalle">Inténtalo de nuevo en unos minutos.</p>
+    <button id="btn-reintentar" type="button">Intentar de nuevo</button>
+  </div>
+
+  <button id="btn-terminar" data-propio type="button" title="Terminar conversación" hidden>✕ Terminar</button>
+
+  <script src="agente.js?v=df71f5ba35"></script>
+</body>
+</html>

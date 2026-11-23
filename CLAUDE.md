@@ -66,7 +66,7 @@ haría perder el permiso de micrófono, que solo vale para el origen del `src`.
 ## Comandos
     python3 scripts/construir.py            # valida y genera _site/
     python3 scripts/construir.py --validar  # solo valida
-    python3 scripts/construir.py --prueba   # genera prueba/ (3 agentes)
+    python3 scripts/construir.py --prueba   # genera prueba/ (AGENTES_PRUEBA); si prueba/ está en main, se publica en /prueba/
     python3 scripts/servidor.py             # http://localhost:8000/lista.html (pruebas en la sesión)
     node --check src/agente.js
 

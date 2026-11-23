@@ -158,6 +158,7 @@ sequenceDiagram
 | Producción | https://innovacion-ag.github.io/profesores/ (`lista.html`, `tablero.html`, `<id>.html`) | GitHub Actions (`publicar.yml`) en cada push a `main`, solo si la validación pasa. |
 | Puente | https://erikv-ag.github.io/profesores/ | GitHub Pages desde la rama `main` de `ErikV-AG/profesores`. Dentro de un iframe incrusta la página nueva; abierta directo, redirige. |
 | Revisión de PR | Checks del PR | `publicar.yml` valida y construye sin publicar. |
+| Prueba en el dominio real | https://innovacion-ag.github.io/profesores/prueba/ (`iframes.html` y una página por agente de prueba) | Solo mientras exista la carpeta `prueba/` en `main`: se publica tal cual junto con producción, con un aviso. Se genera con `construir.py --prueba` desde la rama del cambio y se borra al terminar la prueba. |
 | Local | http://localhost:8000/lista.html | `python3 scripts/servidor.py`. D-ID no conecta desde `localhost`. |
 
 ## 7. Datos
