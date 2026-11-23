@@ -26,7 +26,7 @@ conversa por voz o texto.
 
 | | |
 | --- | --- |
-| Estado | En operación: 53 agentes publicados, con iframes en cursos de Rise |
+| Estado | En operación, con iframes en cursos de Rise. Los agentes publicados están en [lista.html](https://innovacion-ag.github.io/profesores/lista.html) |
 | Responsable | @CoriaAlx |
 | Suplente | @rodrig317-cpu |
 | Supervisor y revisor | @ErikV-AG |
