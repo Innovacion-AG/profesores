@@ -75,37 +75,37 @@
     "nombre": "Charles Darwin · Diplomado IA, certificación 1 (GRG)",
     "did_agent_id": "v2_agt_gaPr05vN",
     "did_client_key": "ck_fy-WiKhqMSqix0klRplAW",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_3201m8cpvsdxethte093zstmynzg"
   },
   "diplomadoIA-cert1-UCC_Darwin": {
     "nombre": "Charles Darwin · Diplomado IA, certificación 1 (UCC)",
     "did_agent_id": "v2_agt_RVJhy2DF",
     "did_client_key": "ck_E4fTRmOjyRcimajm8JZne",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_3201m8cpvsdxethte093zstmynzg"
   },
   "diplomadoIA-cert1_Darwin": {
     "nombre": "Charles Darwin · Diplomado IA, certificación 1",
     "did_agent_id": "v2_agt_RVJhy2DF",
     "did_client_key": "ck_E4fTRmOjyRcimajm8JZne",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_3201m8cpvsdxethte093zstmynzg"
   },
   "diplomadoIA-cert2-UCC_UNO": {
     "nombre": "UNO · Diplomado IA, certificación 2 (UCC)",
     "did_agent_id": "v2_agt_mMFzf-9V",
     "did_client_key": "ck_nOYv1o8A1qNl-SQm3c4lA",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_7301m8cr0319e908b0ww7fdtwxv3"
   },
   "diplomadoIA-cert2_UNO": {
     "nombre": "UNO · Diplomado IA, certificación 2",
     "did_agent_id": "v2_agt_mMFzf-9V",
     "did_client_key": "ck_nOYv1o8A1qNl-SQm3c4lA",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_7301m8cr0319e908b0ww7fdtwxv3"
   },
   "diplomadoIA-cert3_Alan": {
     "nombre": "Alan Turing · Diplomado IA, certificación 3",
     "did_agent_id": "v2_agt_fjQgURYR",
     "did_client_key": "ck_jNGs4pZqYMLKHXdGU-UN-",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1301m8craebefwaagh0rvh04vj8n"
   },
   "emprendimiento_innovacion_taylor": {
     "nombre": "Frederick Taylor · Emprendimiento e innovación",
@@ -249,13 +249,13 @@
     "nombre": "UNO · Diplomado IA, certificación 2, GRG",
     "did_agent_id": "v2_agt_mMFzf-9V",
     "did_client_key": "ck_nOYv1o8A1qNl-SQm3c4lA",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_7301m8cr0319e908b0ww7fdtwxv3"
   },
   "diplomadoIA-cert3-GRG_Alan": {
     "nombre": "Alan Turing · Diplomado IA, certificación 3, GRG",
     "did_agent_id": "v2_agt_fjQgURYR",
     "did_client_key": "ck_jNGs4pZqYMLKHXdGU-UN-",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1301m8craebefwaagh0rvh04vj8n"
   },
   "mercadotecnia_comercio_smith": {
     "nombre": "Adam Smith · Mercadotecnia y Comercio",
